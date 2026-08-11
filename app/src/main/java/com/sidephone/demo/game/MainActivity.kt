@@ -17,6 +17,13 @@ import com.sidephone.demo.game.ui.theme.DemogameTheme
 import com.sidephone.demo.game.util.Gamepad
 import com.sidephone.demo.game.util.Gameplay
 
+// TODO: add .editorconfig
+// TODO: add comments
+// TODO: add menu screen
+// TODO: add highscore screen
+// TODO: make it possible to start/stop/pause the game
+// TODO: add readme
+
 class MainActivity : ComponentActivity() {
     private var gamepad = Gamepad()
     private var gameplay = Gameplay()
