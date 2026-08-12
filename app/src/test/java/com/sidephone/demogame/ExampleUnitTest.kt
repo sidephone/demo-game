@@ -1,4 +1,4 @@
-package com.sidephone.demo.game
+package com.sidephone.demogame
 
 import org.junit.Test
 
