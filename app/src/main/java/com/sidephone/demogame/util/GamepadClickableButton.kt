@@ -9,7 +9,14 @@ import android.view.KeyEvent as AndroidKeyEvent
 
 fun Modifier.clickableWithGamepadStart(onClick: () -> Unit): Modifier =
 	this.onKeyEvent { event: KeyEvent ->
-		if (event.type == KeyEventType.KeyDown && event.nativeKeyEvent.keyCode == AndroidKeyEvent.KEYCODE_BUTTON_START) {
+		if (
+			event.type == KeyEventType.KeyDown
+			&& (
+				event.nativeKeyEvent.keyCode == AndroidKeyEvent.KEYCODE_BUTTON_START
+				|| event.nativeKeyEvent.keyCode == AndroidKeyEvent.KEYCODE_BUTTON_A
+				|| event.nativeKeyEvent.keyCode == AndroidKeyEvent.KEYCODE_BUTTON_B
+			)
+		) {
 			onClick()
 			true // consume the event
 		} else {

@@ -22,9 +22,11 @@ import com.sidephone.demogame.screens.HighScoresScreen
 import com.sidephone.demogame.screens.MainMenuScreen
 import com.sidephone.demogame.ui.theme.DemogameTheme
 
+
 private enum class Screen {
     Menu, Game, HighScores
 }
+
 
 class MainActivity : ComponentActivity() {
 	private var gamepad = Gamepad()
