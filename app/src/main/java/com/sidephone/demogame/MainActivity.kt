@@ -1,75 +1,108 @@
 package com.sidephone.demogame
 
+import android.content.Intent
 import android.os.Bundle
-import android.view.KeyEvent
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import com.sidephone.demogame.ui.theme.DemogameTheme
-import com.sidephone.demogame.util.Gamepad
-import com.sidephone.demogame.util.Gameplay
-
-// TODO: add comments
-// TODO: add menu screen
-// TODO: add highscore screen
-// TODO: make it possible to start/stop/pause the game
-// TODO: add readme
+import com.sidephone.demogame.ui.theme.Dimens
+import com.sidephone.demogame.util.clickableWithGamepadStart
 
 class MainActivity : ComponentActivity() {
-	private var gamepad = Gamepad()
-	private var gameplay = Gameplay()
-
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 
-		gamepad.resetKeyPress()
-		gameplay.start()
-
 		enableEdgeToEdge()
 		setContent {
-			val gameScreen by gameplay.state.collectAsState()
-
 			DemogameTheme {
 				Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-					SetContent(
-						txt = gameScreen.screenOutput,
-						modifier = Modifier.padding(innerPadding)
+					MainMenu(
+						modifier = Modifier.padding(innerPadding),
+						onNewGame = {
+							startActivity(Intent(this, GameplayActivity::class.java))
+						},
+						onHighScores = {
+							startActivity(Intent(this, HighScoresActivity::class.java))
+						},
+						onExit = {
+							finish()
+						}
 					)
 				}
 			}
 		}
 	}
-
-
-	override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
-		if (gamepad.onKeyDown(keyCode, event)) {
-			gameplay.onPressedKeys(gamepad.pressedKeys)
-			return true
-		}
-
-		return super.onKeyDown(keyCode, event)
-	}
-
-
-	override fun onKeyUp(keyCode: Int, event: KeyEvent?): Boolean {
-		if (gamepad.onKeyUp(keyCode, event)) {
-			gameplay.onPressedKeys(gamepad.pressedKeys)
-			return true
-		}
-
-		return super.onKeyUp(keyCode, event)
-	}
 }
 
 @Composable
-fun SetContent(txt: String, modifier: Modifier = Modifier) {
-	Text(text = txt, modifier = modifier)
+fun MainMenu(
+    modifier: Modifier = Modifier,
+    onNewGame: () -> Unit,
+    onHighScores: () -> Unit,
+    onExit: () -> Unit
+) {
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(Dimens.MainMenuButtonContainerPadding),
+        verticalArrangement = Arrangement.Top,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+
+		Text(
+			text = stringResource(R.string.app_name),
+			style = MaterialTheme.typography.headlineMedium,
+			textAlign = TextAlign.Center,
+			modifier = Modifier.padding(
+				top = Dimens.MainMenuTitlePaddingTop,
+				bottom = Dimens.MainMenuTitlePaddingBottom
+			)
+		)
+
+		val buttonModifiers = Modifier
+			.fillMaxWidth()
+			.padding(
+				bottom = Dimens.MainMenuButtonPaddingBottom,
+				start = Dimens.MainMenuButtonPaddingHorizontal,
+				end = Dimens.MainMenuButtonPaddingHorizontal
+			)
+
+			Button(
+				onClick = onNewGame,
+				modifier = buttonModifiers.clickableWithGamepadStart(onNewGame)
+			) {
+				Text(text = stringResource(R.string.menu_new_game))
+			}
+			Button(
+				onClick = onHighScores,
+				modifier = buttonModifiers.clickableWithGamepadStart(onHighScores)
+			) {
+				Text(text = stringResource(R.string.menu_high_scores))
+			}
+			Button(
+				onClick = onExit,
+				modifier = buttonModifiers.clickableWithGamepadStart(onExit)
+			) {
+				Text(text = stringResource(R.string.menu_exit))
+			}
+		}
+
 }

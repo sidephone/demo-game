@@ -23,6 +23,9 @@
 				<category android:name="android.intent.category.LAUNCHER" />
 			</intent-filter>
 		</activity>
+
+		<activity android:name=".GameplayActivity" android:exported="false" />
+		<activity android:name=".HighScoresActivity" android:exported="false" />
 	</application>
 
 </manifest>

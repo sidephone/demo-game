@@ -1,11 +1,14 @@
-package com.sidephone.demogame.util
+package com.sidephone.demogame.engine
 
+import android.util.Log
 import android.view.KeyEvent
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import java.util.concurrent.Executors
 
 class Gameplay {
+	private val LOG_TAG = Gameplay::class.java.simpleName
+
 	// game loop
 	private val TICK_INTERVAL = 1000L / 60L // Advance game logic about 60 times per second. Adjust as needed.
 	private val executor = Executors.newSingleThreadScheduledExecutor()
@@ -47,6 +50,7 @@ class Gameplay {
 
 
 	fun start() {
+		Log.d(LOG_TAG, "Starting game loop with tick interval: $TICK_INTERVAL ms")
 		executor.scheduleWithFixedDelay(
 			{ advance() },
 			0,
@@ -57,6 +61,7 @@ class Gameplay {
 
 
 	fun stop() {
+		Log.d(LOG_TAG, "Stopping game loop")
 		executor.shutdownNow()
 	}
 

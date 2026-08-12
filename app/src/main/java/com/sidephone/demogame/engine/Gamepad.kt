@@ -1,4 +1,4 @@
-package com.sidephone.demogame.util
+package com.sidephone.demogame.engine
 
 import android.view.KeyEvent
 
