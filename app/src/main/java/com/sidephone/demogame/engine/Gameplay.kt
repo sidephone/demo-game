@@ -66,6 +66,11 @@ class Gameplay {
 	}
 
 
+	fun isRunning(): Boolean {
+		return !executor.isShutdown && !executor.isTerminated
+	}
+
+
 	private fun advance() {
 		processInput()
 
