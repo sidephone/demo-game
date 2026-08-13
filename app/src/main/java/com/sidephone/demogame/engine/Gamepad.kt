@@ -16,7 +16,7 @@ class Gamepad {
 	}
 
 
-	fun onKeyUp(keyCode: Int, event: KeyEvent?): Boolean {
+	fun onKeyUp(keyCode: Int): Boolean {
 		if (hasKey(keyCode)) {
 			pressedKeys.remove(keyCode)
 			return true
@@ -26,7 +26,7 @@ class Gamepad {
 	}
 
 
-	fun resetKeyPress() {
+	fun reset() {
 		pressedKeys.clear()
 	}
 

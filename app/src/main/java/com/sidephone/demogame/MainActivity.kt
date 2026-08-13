@@ -42,18 +42,27 @@ class MainActivity : ComponentActivity() {
 
 				// Back button/gesture returns to the menu from any sub-screen
 				BackHandler(enabled = currentScreen != Screen.Menu) {
-					gameplay.stop()
-					currentScreen = Screen.Menu
+					if (currentScreen == Screen.Game) {
+						gameplay.pause()
+					} else {
+						currentScreen = Screen.Menu
+					}
 				}
 
 				Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
 					Box(modifier = Modifier.padding(innerPadding)) {
 						when (currentScreen) {
 							Screen.Menu -> MainMenuScreen(
+								isGamePaused = gameplay.isPaused(),
 								onNewGame = {
 									currentScreen = Screen.Game
-									gameplay = Gameplay()
-									gameplay.start()
+
+									gamepad.reset()
+
+									if (!gameplay.isPaused()) gameplay = Gameplay()
+									gameplay
+										.setOnPausedCallback { currentScreen = Screen.Menu }
+										.start()
 								},
 								onHighScores = { currentScreen = Screen.HighScores },
 								onExit = { finish() }
@@ -85,7 +94,7 @@ class MainActivity : ComponentActivity() {
 
 
 	override fun onKeyUp(keyCode: Int, event: KeyEvent?): Boolean {
-		if (gameplay.isRunning() && gamepad.onKeyUp(keyCode, event)) {
+		if (gameplay.isRunning() && gamepad.onKeyUp(keyCode)) {
 			gameplay.onPressedKeys(gamepad.pressedKeys)
 			return true
 		}

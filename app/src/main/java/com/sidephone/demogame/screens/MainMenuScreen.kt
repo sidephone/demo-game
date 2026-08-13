@@ -21,20 +21,20 @@ import com.sidephone.demogame.util.clickableWithGamepadStart
 
 @Composable
 fun MainMenuScreen(
-    modifier: Modifier = Modifier,
-    onNewGame: () -> Unit,
-    onHighScores: () -> Unit,
-    onExit: () -> Unit
+	modifier: Modifier = Modifier,
+	isGamePaused: Boolean = false,
+	onNewGame: () -> Unit,
+	onHighScores: () -> Unit,
+	onExit: () -> Unit
 ) {
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(Dimens.MainMenuButtonContainerPadding),
-        verticalArrangement = Arrangement.Top,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-
+	Column(
+		modifier = modifier
+			.fillMaxSize()
+			.verticalScroll(rememberScrollState())
+			.padding(Dimens.MainMenuButtonContainerPadding),
+		verticalArrangement = Arrangement.Top,
+		horizontalAlignment = Alignment.CenterHorizontally
+	) {
 		Text(
 			text = stringResource(R.string.app_name),
 			style = MaterialTheme.typography.headlineMedium,
@@ -53,23 +53,25 @@ fun MainMenuScreen(
 				end = Dimens.MainMenuButtonPaddingHorizontal
 			)
 
-			Button(
-				onClick = onNewGame,
-				modifier = buttonModifiers.clickableWithGamepadStart(onNewGame)
-			) {
-				Text(text = stringResource(R.string.menu_new_game))
-			}
-			Button(
-				onClick = onHighScores,
-				modifier = buttonModifiers.clickableWithGamepadStart(onHighScores)
-			) {
-				Text(text = stringResource(R.string.menu_high_scores))
-			}
-			Button(
-				onClick = onExit,
-				modifier = buttonModifiers.clickableWithGamepadStart(onExit)
-			) {
-				Text(text = stringResource(R.string.menu_exit))
-			}
+		Button(
+			onClick = onNewGame,
+			modifier = buttonModifiers.clickableWithGamepadStart(onNewGame)
+		) {
+			Text(text = stringResource(
+				if (isGamePaused) R.string.menu_resume_game else R.string.menu_new_game
+			))
 		}
+		Button(
+			onClick = onHighScores,
+			modifier = buttonModifiers.clickableWithGamepadStart(onHighScores)
+		) {
+			Text(text = stringResource(R.string.menu_high_scores))
+		}
+		Button(
+			onClick = onExit,
+			modifier = buttonModifiers.clickableWithGamepadStart(onExit)
+		) {
+			Text(text = stringResource(R.string.menu_exit))
+		}
+	}
 }

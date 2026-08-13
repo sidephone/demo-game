@@ -2,9 +2,12 @@ package com.sidephone.demogame.engine
 
 import android.util.Log
 import android.view.KeyEvent
+import androidx.annotation.MainThread
+import androidx.annotation.WorkerThread
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import java.util.concurrent.Executors
+import java.util.concurrent.Future
 
 class Gameplay {
 	private val LOG_TAG = Gameplay::class.java.simpleName
@@ -12,6 +15,9 @@ class Gameplay {
 	// game loop
 	private val TICK_INTERVAL = 1000L / 60L // Advance game logic about 60 times per second. Adjust as needed.
 	private val executor = Executors.newSingleThreadScheduledExecutor()
+	private var engineLooper: Future<*>? = null
+	private var isPaused = false
+	private var onPaused = {}
 
 	// input handling
 	@Volatile private var pressedKeys = setOf<Int>()
@@ -44,35 +50,96 @@ class Gameplay {
 	 *
 	 * @param keys The set of currently pressed keys represented by their KeyEvent key codes.
 	 */
+	@MainThread
 	fun onPressedKeys(keys: Set<Int>) {
 		pressedKeys = keys.toSet() // make a copy for thread safety
+		preprocessInput()
 	}
 
 
+	/**
+	 * Start or resume the game loop, or if already running, do nothing.
+	 */
+	@MainThread
 	fun start() {
-		Log.d(LOG_TAG, "Starting game loop with tick interval: $TICK_INTERVAL ms")
-		executor.scheduleWithFixedDelay(
+		isPaused = false
+		engineLooper = executor.scheduleWithFixedDelay(
 			{ advance() },
 			0,
 			TICK_INTERVAL,
 			java.util.concurrent.TimeUnit.MILLISECONDS
 		)
+
+		Log.d(LOG_TAG, "Started the game loop with tick interval: $TICK_INTERVAL ms")
 	}
 
 
+	/**
+	 * Pause the game loop, or if already paused, do nothing.
+	 */
+	@MainThread
+	fun pause() {
+		if (isPaused) {
+			return
+		}
+
+		engineLooper?.cancel(true)
+		isPaused = true
+		if (onPaused != {}) onPaused()
+
+		Log.d(LOG_TAG, "Paused the game loop")
+	}
+
+
+	/**
+	 * Stop the game loop and release resources. After calling this, you can not resume the game
+	 * anymore. You must create a new instance of Gameplay to start a new game.
+	 */
+	@MainThread
 	fun stop() {
-		Log.d(LOG_TAG, "Stopping game loop")
+		pause()
 		executor.shutdownNow()
+		Log.d(LOG_TAG, "Stopped the game loop")
 	}
 
 
+	/**
+	 * A utility function that returns true if the game loop is currently running.
+	 */
+	@MainThread
 	fun isRunning(): Boolean {
-		return !executor.isShutdown && !executor.isTerminated
+		return !isPaused && !executor.isShutdown && !executor.isTerminated
 	}
 
 
+	/**
+	 * A utility function that returns true if the game loop is currently paused.
+	 */
+	@MainThread
+	fun isPaused(): Boolean {
+		return isPaused
+	}
+
+
+	/**
+	 * Set an optional callback to be invoked when the game is paused. This can be used to navigate
+	 * back to the main menu or perform other actions.
+	 */
+	@MainThread
+	fun setOnPausedCallback(callback: () -> Unit): Gameplay {
+		onPaused = callback
+		return this
+	}
+
+
+	/**
+	 * The main game loop function. This is equivalent to a single step or "frame" in the game. It
+	 * is called repeatedly at a fixed interval (TICK_INTERVAL) to read the input, update state and
+	 * perform other game logic. Finally, the "render()" method draws the current state to the screen.
+	 */
+	@WorkerThread
 	private fun advance() {
-		processInput()
+		processGameInput()
 
 		// optionally, do these at even longer intervals to save resources, e.g., every 100ms or 500ms
 		validateMovement()
@@ -81,7 +148,25 @@ class Gameplay {
 	}
 
 
-	private fun processInput() {
+	/**
+	 * Perform any non-game related actions, immediately after receiving the pressed keys. For example,
+	 * pause the game, when "KeyEvent.KEYCODE_BUTTON_START" is pressed.
+	 */
+	@MainThread
+	private fun preprocessInput() {
+		if (KeyEvent.KEYCODE_BUTTON_START in pressedKeys) {
+			pause()
+		}
+	}
+
+
+	/**
+	 * Set any game state variables based on the currently pressed keys. This is the first step in
+	 * the game loop. All following steps will use these variables to calculate actions or draw objects.
+	 * on the screen.
+	 */
+	@WorkerThread
+	private fun processGameInput() {
 		val keys = pressedKeys // make a copy for thread safety
 
 		movingForward = KeyEvent.KEYCODE_DPAD_UP in keys
@@ -93,33 +178,12 @@ class Gameplay {
 	}
 
 
-	private fun validateMovement() {
-		if (movingForward && movingBackward) {
-			movingForward = false
-			movingBackward = false
-		}
-
-		if (movingLeft && movingRight) {
-			movingLeft = false
-			movingRight = false
-		}
-	}
-
-
-	private fun updateScore() {
-		val now = System.currentTimeMillis()
-		if (now - lastScoreUpdateTime < SCORE_UPDATE_INTERVAL) {
-			return
-		}
-		lastScoreUpdateTime = now
-
-		if (movingForward || movingLeft || movingRight) score += 1
-		if (movingBackward) score -= 1
-		if (shooting) score += 5
-		if (jumping) score += 3
-	}
-
-
+	/**
+	 * This is the main method that draws to the screen. In this demo, we simply update a string that
+	 * represents the current game state, but it could draw graphics, update a canvas, or perform other
+	 * rendering tasks in a real game.
+	 */
+	@WorkerThread
 	private fun render() {
 		var actions = "Moving: "
 
@@ -144,5 +208,41 @@ class Gameplay {
 		if (newScreenOutput != _state.value.screenOutput) {
 			_state.value = GameState(newScreenOutput)
 		}
+	}
+
+
+	/**
+	 * An example of input validation. In this demo, we simply ensure that the player cannot move forward and backward
+	 * at the same time, or left and right at the same time.
+	 */
+	@WorkerThread
+	private fun validateMovement() {
+		if (movingForward && movingBackward) {
+			movingForward = false
+			movingBackward = false
+		}
+
+		if (movingLeft && movingRight) {
+			movingLeft = false
+			movingRight = false
+		}
+	}
+
+
+	/**
+	 * Update the score based on the current actions.
+	 */
+	@WorkerThread
+	private fun updateScore() {
+		val now = System.currentTimeMillis()
+		if (now - lastScoreUpdateTime < SCORE_UPDATE_INTERVAL) {
+			return
+		}
+		lastScoreUpdateTime = now
+
+		if (movingForward || movingLeft || movingRight) score += 1
+		if (movingBackward) score -= 1
+		if (shooting) score += 5
+		if (jumping) score += 3
 	}
 }
