@@ -97,7 +97,7 @@ class Gameplay {
 	 */
 	@MainThread
 	fun stop() {
-		pause()
+		isPaused = false
 		executor.shutdownNow()
 		Log.d(LOG_TAG, "Stopped the game loop")
 	}

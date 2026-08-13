@@ -2,6 +2,7 @@
     <string name="app_name">Sidephone Demo Game</string>
 		<string name="menu_new_game">New Game</string>
 		<string name="menu_resume_game">Resume Game</string>
+		<string name="menu_end_game">End Current Game</string>
 		<string name="menu_high_scores">High Scores</string>
 		<string name="menu_exit">Exit</string>
 </resources>

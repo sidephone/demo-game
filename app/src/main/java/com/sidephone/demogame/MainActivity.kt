@@ -39,6 +39,7 @@ class MainActivity : ComponentActivity() {
 		setContent {
 			DemogameTheme {
 				var currentScreen by remember { mutableStateOf(Screen.Menu) }
+				var isGamePaused by remember { mutableStateOf(false) }
 
 				// Back button/gesture returns to the menu from any sub-screen
 				BackHandler(enabled = currentScreen != Screen.Menu) {
@@ -53,7 +54,13 @@ class MainActivity : ComponentActivity() {
 					Box(modifier = Modifier.padding(innerPadding)) {
 						when (currentScreen) {
 							Screen.Menu -> MainMenuScreen(
-								isGamePaused = gameplay.isPaused(),
+								isGamePaused = isGamePaused,
+								onHighScores = { currentScreen = Screen.HighScores },
+								onExit = { finish() },
+								onEndGame = {
+									gameplay.stop()
+									isGamePaused = gameplay.isPaused()
+								},
 								onNewGame = {
 									currentScreen = Screen.Game
 
@@ -61,11 +68,12 @@ class MainActivity : ComponentActivity() {
 
 									if (!gameplay.isPaused()) gameplay = Gameplay()
 									gameplay
-										.setOnPausedCallback { currentScreen = Screen.Menu }
+										.setOnPausedCallback {
+											isGamePaused = gameplay.isPaused()
+											currentScreen = Screen.Menu
+										}
 										.start()
 								},
-								onHighScores = { currentScreen = Screen.HighScores },
-								onExit = { finish() }
 							)
 							Screen.Game -> GameScreen(gameplay)
 							Screen.HighScores -> HighScoresScreen()
