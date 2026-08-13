@@ -18,13 +18,13 @@ import androidx.compose.ui.Modifier
 import com.sidephone.demogame.engine.Gamepad
 import com.sidephone.demogame.engine.Gameplay
 import com.sidephone.demogame.screens.GameScreen
-import com.sidephone.demogame.screens.HighScoresScreen
+import com.sidephone.demogame.screens.SettingsScreen
 import com.sidephone.demogame.screens.MainMenuScreen
 import com.sidephone.demogame.ui.theme.DemogameTheme
 
 
 private enum class Screen {
-    Menu, Game, HighScores
+    Menu, Game, Settings
 }
 
 
@@ -55,7 +55,7 @@ class MainActivity : ComponentActivity() {
 						when (currentScreen) {
 							Screen.Menu -> MainMenuScreen(
 								isGamePaused = isGamePaused,
-								onHighScores = { currentScreen = Screen.HighScores },
+								onSettings = { currentScreen = Screen.Settings },
 								onExit = { finish() },
 								onEndGame = {
 									gameplay.stop()
@@ -76,7 +76,7 @@ class MainActivity : ComponentActivity() {
 								},
 							)
 							Screen.Game -> GameScreen(gameplay)
-							Screen.HighScores -> HighScoresScreen()
+							Screen.Settings -> SettingsScreen()
 						}
 					}
 				}

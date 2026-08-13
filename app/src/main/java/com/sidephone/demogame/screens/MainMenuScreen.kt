@@ -25,7 +25,7 @@ fun MainMenuScreen(
 	isGamePaused: Boolean = false,
 	onNewGame: () -> Unit,
 	onEndGame: () -> Unit,
-	onHighScores: () -> Unit,
+	onSettings: () -> Unit,
 	onExit: () -> Unit
 ) {
 	Column(
@@ -73,10 +73,10 @@ fun MainMenuScreen(
 		}
 
 		Button(
-			onClick = onHighScores,
-			modifier = buttonModifiers.clickableWithGamepadStart(onHighScores)
+			onClick = onSettings,
+			modifier = buttonModifiers.clickableWithGamepadStart(onSettings)
 		) {
-			Text(text = stringResource(R.string.menu_high_scores))
+			Text(text = stringResource(R.string.menu_settings))
 		}
 		Button(
 			onClick = onExit,

@@ -12,15 +12,20 @@ import androidx.compose.ui.res.stringResource
 import com.sidephone.demogame.R
 
 @Composable
-fun HighScoresScreen() {
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(
-            text = stringResource(R.string.menu_high_scores),
-            style = MaterialTheme.typography.headlineMedium
-        )
-    }
+fun SettingsScreen() {
+	Column(
+		modifier = Modifier.fillMaxSize(),
+		verticalArrangement = Arrangement.Center,
+		horizontalAlignment = Alignment.CenterHorizontally
+	) {
+		Text(
+			text = stringResource(R.string.menu_settings),
+			style = MaterialTheme.typography.headlineMedium
+		)
+
+		Text(
+			text = "No settings available yet.",
+			style = MaterialTheme.typography.bodyLarge
+		)
+	}
 }
