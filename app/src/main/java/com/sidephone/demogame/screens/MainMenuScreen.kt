@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -17,6 +16,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import com.sidephone.demogame.R
 import com.sidephone.demogame.ui.theme.Dimens
+import com.sidephone.demogame.util.MenuButton
 import com.sidephone.demogame.util.clickableWithGamepadStart
 
 @Composable
@@ -54,7 +54,7 @@ fun MainMenuScreen(
 				end = Dimens.MainMenuButtonPaddingHorizontal
 			)
 
-		Button(
+		MenuButton(
 			onClick = onNewGame,
 			modifier = buttonModifiers.clickableWithGamepadStart(onNewGame)
 		) {
@@ -64,7 +64,7 @@ fun MainMenuScreen(
 		}
 
 		if (isGamePaused) {
-			Button(
+			MenuButton(
 				onClick = onEndGame,
 				modifier = buttonModifiers.clickableWithGamepadStart(onEndGame)
 			) {
@@ -72,13 +72,13 @@ fun MainMenuScreen(
 			}
 		}
 
-		Button(
+		MenuButton(
 			onClick = onSettings,
 			modifier = buttonModifiers.clickableWithGamepadStart(onSettings)
 		) {
 			Text(text = stringResource(R.string.menu_settings))
 		}
-		Button(
+		MenuButton(
 			onClick = onExit,
 			modifier = buttonModifiers.clickableWithGamepadStart(onExit)
 		) {
