@@ -66,8 +66,8 @@ class Gameplay {
 	 * Start or resume the game loop, or if already running, do nothing.
 	 */
 	@MainThread
-fun start() {
-		if (isRunning()) {
+	fun start() {
+		if (isGameThreadAlive()) {
 			return
 		}
 
@@ -117,7 +117,7 @@ fun start() {
 	 */
 	@MainThread
 	fun isRunning(): Boolean {
-		return !isPaused && !executor.isShutdown && !executor.isTerminated
+		return !isPaused && isGameThreadAlive()
 	}
 
 
@@ -138,6 +138,15 @@ fun start() {
 	fun setOnPausedCallback(callback: () -> Unit): Gameplay {
 		onPaused = callback
 		return this
+	}
+
+
+	/**
+	 * Returns true when the game thread executor is still working.
+	 */
+	@MainThread
+	private fun isGameThreadAlive(): Boolean {
+		return !executor.isShutdown && !executor.isTerminated && (engineLooper?.isDone == false)
 	}
 
 
