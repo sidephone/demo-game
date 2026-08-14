@@ -90,7 +90,7 @@ class Gameplay {
 
 		engineLooper?.cancel(true)
 		isPaused = true
-		if (onPaused != {}) onPaused()
+		onPaused()
 
 		Log.d(LOG_TAG, "Paused the game loop")
 	}
