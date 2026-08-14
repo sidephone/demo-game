@@ -3,7 +3,7 @@ TODO: Write a brief description.
 
 
 ## Project Structure
-The code is located in `java/com/sidephone/demogame/`. See each file for more details.
+The code is located in `app/src/main/java/com/sidephone/demogame/`. See each file for more details.
 
 - **engine/**
     - **_Gamepad._** Handles the gamepad input and provides it to the game engine, `Gameplay`. You shouldn't need to modify this.
