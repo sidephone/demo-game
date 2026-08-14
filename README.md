@@ -9,11 +9,11 @@ The code is located in `app/src/main/java/com/sidephone/demogame/`. See each fil
     - **_Gamepad._** Handles the gamepad input and provides it to the game engine, `Gameplay`. You shouldn't need to modify this.
     - **_Gameplay._** The game engine. Contains the main game logic. Define your game rules and mechanics, graphics rendering, and audio playback here.
 - **screens/**
-    - **_GameScreen._** This is the screen where the game is played. If needed add extra buttons or UI elements here.
+    - **_GameScreen._** This is the screen where the game is played. If needed, add extra buttons or UI elements here.
     - **_MainMenuScreen._** The main menu displayed on app launch. You can add extra buttons or connect it to other screens.
     - **_SettingsScreen._** An empty screen template. You can add the game settings or rework it to your needs.
 - **ui.theme/**
-    - ... (standard Android UI theme files: Color, Dimens, Type, etc)
+    - ... (standard Android UI theme files: Color, Dimens, Type, etc.)
 - **util/**
     - **_GamepadClickableButton._** Enables proper navigation around the menus with a gamepad. Add or remove supported buttons as needed.
     - **_MenuButton._** Provides proper button styles for the menu buttons when they are selected or unselected. You can add your own button styles here.

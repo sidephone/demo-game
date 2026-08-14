@@ -4,10 +4,10 @@ import android.util.Log
 import android.view.KeyEvent
 import androidx.annotation.MainThread
 import androidx.annotation.WorkerThread
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import java.util.concurrent.Executors
 import java.util.concurrent.Future
+import kotlin.math.cos
+import kotlin.math.sin
 
 
 /**
@@ -27,23 +27,22 @@ class Gameplay {
 	// input handling
 	@Volatile private var pressedKeys = setOf<Int>()
 
+	// graphics
+	val TARGET_FPS = 100 // adjust the smoothness as needed. Not necessarily the same as TICK_INTERVAL, which is for game logic.
+	@Volatile var screenOutput: DrawCommandList = DrawCommandList()
+	private val graphics = GameGraphics()
+	@Volatile private var firstIteration = true
+
 	// game actions and state
+	private var shipX = graphics.screenWidth / 2f
+	private var shipY = graphics.screenHeight / 2f
+	private var shipDirection = -90 // degrees
+
+
 	private var movingForward = false
 	private var movingBackward = false
 	private var movingLeft = false
 	private var movingRight = false
-	private var shooting = false
-	private var jumping = false
-
-	private var score = 0
-	private val SCORE_UPDATE_INTERVAL = 350L
-	private var lastScoreUpdateTime = 0L
-
-	// output
-	data class GameState(val screenOutput: String)
-
-	private val _state = MutableStateFlow(GameState(screenOutput = ""))
-	val state: StateFlow<GameState> = _state
 
 
 	/**
@@ -72,6 +71,8 @@ class Gameplay {
 		}
 
 		isPaused = false
+		firstIteration = true
+
 		engineLooper = executor.scheduleWithFixedDelay(
 			{ advance() },
 			0,
@@ -161,7 +162,6 @@ class Gameplay {
 
 		// optionally, do these at even longer intervals to save resources, e.g., every 100ms or 500ms
 		validateMovement()
-		updateScore()
 		render()
 	}
 
@@ -191,8 +191,6 @@ class Gameplay {
 		movingBackward = KeyEvent.KEYCODE_DPAD_DOWN in keys
 		movingLeft = KeyEvent.KEYCODE_DPAD_LEFT in keys
 		movingRight = KeyEvent.KEYCODE_DPAD_RIGHT in keys
-		jumping = KeyEvent.KEYCODE_BUTTON_A in keys
-		shooting = KeyEvent.KEYCODE_BUTTON_B in keys
 	}
 
 
@@ -203,29 +201,42 @@ class Gameplay {
 	 */
 	@WorkerThread
 	private fun render() {
-		var actions = "Moving: "
+		var isSceneChanged = false
 
-		actions += if (movingForward)
-			"Forward"
-		else if (movingBackward)
-			"Backward"
-		else
-			"No"
-
-		actions += "\nTurning: " + if (movingLeft)
-			"Left"
-		else if (movingRight)
-			"Right"
-		else
-			"No"
-
-		actions += "\nJumping: " + if (jumping) "Yes" else "No"
-		actions += "\nShooting: " + if (shooting) "Yes" else "No"
-
-		val newScreenOutput = "-=== GAME STATE ===-\n\n$actions\n\nScore: $score"
-		if (newScreenOutput != _state.value.screenOutput) {
-			_state.value = GameState(newScreenOutput)
+		if (movingLeft) {
+			isSceneChanged = true
+			shipDirection -= 5
 		}
+
+		if (movingRight) {
+			isSceneChanged = true
+			shipDirection += 5
+		}
+
+		if (movingForward) {
+			isSceneChanged = true
+			shipX += (cos(Math.toRadians(shipDirection.toDouble())) * 5).toFloat()
+			shipY += (sin(Math.toRadians(shipDirection.toDouble())) * 5).toFloat()
+
+			if (shipX < 0) shipX = graphics.screenWidth
+			if (shipY < 0) shipY = graphics.screenHeight
+			if (shipX > graphics.screenWidth) shipX = 0f
+			if (shipY > graphics.screenHeight) shipY = 0f
+		}
+
+		if (firstIteration) {
+			firstIteration = false
+			isSceneChanged = true
+		}
+
+		if (!isSceneChanged) {
+			return
+		}
+
+		val screenObjects = mutableListOf<DrawCommand>()
+		screenObjects.addAll(graphics.drawShip(shipX, shipY, shipDirection))
+
+		screenOutput = DrawCommandList(graphics.backgroundColor, screenObjects)
 	}
 
 
@@ -244,23 +255,5 @@ class Gameplay {
 			movingLeft = false
 			movingRight = false
 		}
-	}
-
-
-	/**
-	 * Update the score based on the current actions.
-	 */
-	@WorkerThread
-	private fun updateScore() {
-		val now = System.currentTimeMillis()
-		if (now - lastScoreUpdateTime < SCORE_UPDATE_INTERVAL) {
-			return
-		}
-		lastScoreUpdateTime = now
-
-		if (movingForward || movingLeft || movingRight) score += 1
-		if (movingBackward) score -= 1
-		if (shooting) score += 5
-		if (jumping) score += 3
 	}
 }

@@ -17,9 +17,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.sidephone.demogame.engine.Gamepad
 import com.sidephone.demogame.engine.Gameplay
-import com.sidephone.demogame.screens.GameScreen
-import com.sidephone.demogame.screens.SettingsScreen
 import com.sidephone.demogame.screens.MainMenuScreen
+import com.sidephone.demogame.screens.SettingsScreen
+import com.sidephone.demogame.screens.game.GameScreen
 import com.sidephone.demogame.ui.theme.DemogameTheme
 
 
