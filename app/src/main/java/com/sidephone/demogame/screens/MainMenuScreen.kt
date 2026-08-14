@@ -60,11 +60,18 @@ fun MainMenuScreen(
 				end = Dimens.MainMenuButtonPaddingHorizontal
 			)
 
+		val hasRequestedInitialFocus = remember { androidx.compose.runtime.mutableStateOf(false) }
+
 		MenuButton(
 			onClick = onNewGame,
 			modifier = buttonModifiers
 				.focusRequester(firstButtonFocusRequester)
-				.onGloballyPositioned { firstButtonFocusRequester.requestFocus() }
+				.onGloballyPositioned {
+					if (!hasRequestedInitialFocus.value) {
+						hasRequestedInitialFocus.value = true
+						firstButtonFocusRequester.requestFocus()
+					}
+				}
 				.clickableWithGamepadStart(onNewGame)
 		) {
 			Text(stringResource(
