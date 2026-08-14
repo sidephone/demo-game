@@ -19,7 +19,7 @@ class Gameplay {
 
 	// game loop
 	private val TICK_INTERVAL = 1000L / 60L // Advance game logic about 60 times per second. Adjust as needed.
-	private val executor = Executors.newSingleThreadScheduledExecutor()
+	private var executor = Executors.newSingleThreadScheduledExecutor()
 	private var engineLooper: Future<*>? = null
 	private var isPaused = false
 	private var onPaused = {}
@@ -34,15 +34,40 @@ class Gameplay {
 	@Volatile private var firstIteration = true
 
 	// game actions and state
-	private var shipX = graphics.screenWidth / 2f
-	private var shipY = graphics.screenHeight / 2f
-	private var shipDirection = -90 // degrees
+	private var shipX = 0f
+	private var shipY = 0f
+	private var shipDirection = 0 // degrees
 
 
 	private var movingForward = false
 	private var movingBackward = false
 	private var movingLeft = false
 	private var movingRight = false
+
+
+	init {
+	    reset()
+	}
+
+
+	/**
+	 * Set the initial state of the game. Call this whenever you need to restart the game.
+	 */
+	fun reset() {
+		pressedKeys = setOf()
+		shipX = graphics.screenWidth / 2f
+		shipY = graphics.screenHeight / 2f
+		shipDirection = -90 // degrees
+
+		movingForward = false
+		movingBackward = false
+		movingLeft = false
+		movingRight = false
+
+		if (!isGameThreadAlive()) {
+			executor = Executors.newSingleThreadScheduledExecutor()
+		}
+	}
 
 
 	/**
