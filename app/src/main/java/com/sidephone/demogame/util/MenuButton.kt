@@ -11,6 +11,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 
+/**
+ * The default Material3 Button highlighting when focused is too subtle. This defines more obvious
+ * colors for the focused state.
+ */
 @Composable
 fun MenuButton(
 	onClick: () -> Unit,
@@ -24,8 +28,11 @@ fun MenuButton(
 		onClick = onClick,
 		interactionSource = interactionSource,
 		colors = ButtonDefaults.buttonColors(
+			// background color
 			containerColor = if (isFocused) MaterialTheme.colorScheme.secondaryContainer
 			else MaterialTheme.colorScheme.secondary,
+
+			// text color
 			contentColor = if (isFocused) MaterialTheme.colorScheme.onSecondaryContainer
 			else MaterialTheme.colorScheme.onSecondary
 		),

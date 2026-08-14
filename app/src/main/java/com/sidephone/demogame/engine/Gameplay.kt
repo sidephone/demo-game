@@ -9,6 +9,11 @@ import kotlinx.coroutines.flow.StateFlow
 import java.util.concurrent.Executors
 import java.util.concurrent.Future
 
+
+/**
+ * The main game engine class. It contains the game loop, input handling, and game state management.
+ * It is designed to be simple and easy to understand, so you can modify it to create your own game.
+ */
 class Gameplay {
 	private val LOG_TAG = Gameplay::class.java.simpleName
 

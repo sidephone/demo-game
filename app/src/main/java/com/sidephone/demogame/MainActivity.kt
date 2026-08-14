@@ -27,7 +27,10 @@ private enum class Screen {
     Menu, Game, Settings
 }
 
-
+/**
+ * Main activity of the game. It displays all screens, coordinates communication between the game
+ * components, and passes input to the game engine.
+ */
 class MainActivity : ComponentActivity() {
 	private var gamepad = Gamepad()
 	private var gameplay = Gameplay()

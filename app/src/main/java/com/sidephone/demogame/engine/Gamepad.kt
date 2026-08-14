@@ -2,6 +2,14 @@ package com.sidephone.demogame.engine
 
 import android.view.KeyEvent
 
+
+/**
+ * Represents the gamepad controller. It takes input from any Activity.onKeyDown, Activity.onKeyUp,
+ * then stores the pressed keys in a set, to be used by other game components. The keys are represented
+ * by their KeyEvent key codes, and remain in the set for as long as the user holds the button down.
+ * When the button is released, the key is removed from the set.
+ * This class already supports all gamepad buttons, so you should not need to modify it.
+ */
 class Gamepad {
 	val pressedKeys = mutableSetOf<Int>()
 
