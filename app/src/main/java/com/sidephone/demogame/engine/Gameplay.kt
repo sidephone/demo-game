@@ -66,7 +66,11 @@ class Gameplay {
 	 * Start or resume the game loop, or if already running, do nothing.
 	 */
 	@MainThread
-	fun start() {
+fun start() {
+		if (isRunning()) {
+			return
+		}
+
 		isPaused = false
 		engineLooper = executor.scheduleWithFixedDelay(
 			{ advance() },
