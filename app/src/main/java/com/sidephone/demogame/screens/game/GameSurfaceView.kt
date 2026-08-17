@@ -2,10 +2,7 @@ package com.sidephone.demogame.screens.game
 
 import android.content.Context
 import android.graphics.Canvas
-import android.graphics.Color
 import android.graphics.Paint
-import android.graphics.PorterDuff
-import android.util.Log
 import android.view.SurfaceHolder
 import android.view.SurfaceView
 import com.sidephone.demogame.engine.DrawCommand
@@ -15,7 +12,7 @@ import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 
-class GameSurfaceView(context: Context, private var gameplay: Gameplay) : SurfaceView(context), SurfaceHolder.Callback {
+class GameSurfaceView(context: Context, private var gameplay: Gameplay, private val menuBackground: Int) : SurfaceView(context), SurfaceHolder.Callback {
 	private var executor = Executors.newSingleThreadScheduledExecutor()
 	private var renderFuture: ScheduledFuture<*>? = null
 	private val paint = Paint()
@@ -51,13 +48,13 @@ class GameSurfaceView(context: Context, private var gameplay: Gameplay) : Surfac
 
 
 	private fun renderFrame(holder: SurfaceHolder) {
-		var drawCommands: DrawCommandList? = null
+		var drawCommands: DrawCommandList?
 
 		if (gameplay.isRunning() && !gameplay.isPaused()) {
 			drawCommands = gameplay.screenOutput
 			isCanvasCleared = false
 		} else if (!isCanvasCleared) {
-			drawCommands = DrawCommandList(backgroundColor = Color.RED)
+			drawCommands = DrawCommandList(backgroundColor = menuBackground)
 			isCanvasCleared = true
 		} else {
 			return
