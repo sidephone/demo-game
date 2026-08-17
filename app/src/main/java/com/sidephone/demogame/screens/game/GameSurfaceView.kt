@@ -6,10 +6,10 @@ import android.graphics.Paint
 import android.util.Log
 import android.view.SurfaceHolder
 import android.view.SurfaceView
+import com.sidephone.demogame.engine.Gameplay
 import com.sidephone.demogame.engine.graphics.DrawCommand
 import com.sidephone.demogame.engine.graphics.GameFrame
-import com.sidephone.demogame.engine.Gameplay
-import com.sidephone.demogame.settings.EngineSettings
+import com.sidephone.demogame.settings.GameplaySettings
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
@@ -44,7 +44,7 @@ class GameSurfaceView(context: Context, private var gameplay: Gameplay, private 
 
 
 	override fun surfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) {
-		// handle window resize and screen rotation if needed
+		gameplay.setViewportSize(width, height)
 	}
 
 
@@ -60,10 +60,10 @@ class GameSurfaceView(context: Context, private var gameplay: Gameplay, private 
 		val exec = Executors.newSingleThreadScheduledExecutor()
 		executor = exec
 		renderFuture = exec.scheduleWithFixedDelay(
-			{ render(holder) }, 0, 1000L / EngineSettings.TARGET_FPS, TimeUnit.MILLISECONDS
+			{ render(holder) }, 0, 1000L / GameplaySettings.TARGET_FPS, TimeUnit.MILLISECONDS
 		)
 
-		Log.d(LOG_TAG, "Rendering loop started at ${EngineSettings.TARGET_FPS} FPS")
+		Log.d(LOG_TAG, "Rendering loop started at ${GameplaySettings.TARGET_FPS} FPS")
 	}
 
 

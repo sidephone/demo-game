@@ -8,7 +8,7 @@ import com.sidephone.demogame.engine.graphics.DrawCommand
 import com.sidephone.demogame.engine.graphics.GameFrame
 import com.sidephone.demogame.engine.graphics.Ship
 import com.sidephone.demogame.engine.graphics.Space
-import com.sidephone.demogame.settings.EngineSettings
+import com.sidephone.demogame.settings.GameplaySettings
 import java.util.concurrent.Executors
 import java.util.concurrent.Future
 import kotlin.math.cos
@@ -34,13 +34,14 @@ class Gameplay {
 	@Volatile private var pressedKeys = setOf<Int>()
 
 	// graphics
-
-
 	@Volatile var currentFrame: GameFrame = GameFrame()
 	private val graphics = Ship()
 	@Volatile private var firstIteration = true
 
 	// game actions and state
+	private var viewportWidth = 1f
+	private var viewportHeight = 1f
+
 	private var shipX = 0f
 	private var shipY = 0f
 	private var shipDirection = 0 // degrees
@@ -62,8 +63,8 @@ class Gameplay {
 	 */
 	fun reset() {
 		pressedKeys = setOf()
-		shipX = EngineSettings.SCREEN_WIDTH / 2f
-		shipY = EngineSettings.SCREEN_HEIGHT / 2f
+		shipX = viewportWidth / 2f
+		shipY = viewportHeight / 2f
 		shipDirection = -90 // degrees
 
 		movingForward = false
@@ -93,6 +94,17 @@ class Gameplay {
 	}
 
 
+	fun setViewportSize(width: Int, height: Int) {
+		if (width <= 0 || height <= 0) {
+			Log.w(LOG_TAG, "Ignoring invalid viewport size: width=$width, height=$height. Must be positive.")
+			return
+		}
+
+		viewportWidth = width.toFloat()
+		viewportHeight = height.toFloat()
+	}
+
+
 	/**
 	 * Start or resume the game loop, or if already running, do nothing.
 	 */
@@ -102,20 +114,19 @@ class Gameplay {
 			return
 		}
 
-
 		isPaused = false
 		firstIteration = true
 
 		engineLooper = executor.scheduleWithFixedDelay(
 			{ advance() },
 			0,
-			1000L / EngineSettings.TARGET_IPS,
+			1000L / GameplaySettings.TARGET_IPS,
 			java.util.concurrent.TimeUnit.MILLISECONDS
 		)
 
 		onStarted()
 
-		Log.d(LOG_TAG, "Gameplay loop started at ${EngineSettings.TARGET_IPS} iterations per second")
+		Log.d(LOG_TAG, "Gameplay loop started at ${GameplaySettings.TARGET_IPS} iterations per second")
 	}
 
 
@@ -263,10 +274,10 @@ class Gameplay {
 			shipX += (cos(Math.toRadians(shipDirection.toDouble())) * 5).toFloat()
 			shipY += (sin(Math.toRadians(shipDirection.toDouble())) * 5).toFloat()
 
-			if (shipX < 0) shipX = EngineSettings.SCREEN_WIDTH
-			if (shipY < 0) shipY = EngineSettings.SCREEN_HEIGHT
-			if (shipX > EngineSettings.SCREEN_WIDTH) shipX = 0f
-			if (shipY > EngineSettings.SCREEN_HEIGHT) shipY = 0f
+			if (shipX < 0) shipX = viewportWidth
+			if (shipY < 0) shipY = viewportHeight
+			if (shipX > viewportWidth) shipX = 0f
+			if (shipY > viewportHeight) shipY = 0f
 		}
 
 		if (firstIteration) {
