@@ -12,11 +12,14 @@ import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 
+/**
+ * A Canvas wrapper that accepts a DrawCommandList from the Gameplay engine and renders it to the screen.
+ * Runs on a separate thread to avoid blocking other game logic.
+ */
 class GameSurfaceView(context: Context, private var gameplay: Gameplay, private val menuBackground: Int) : SurfaceView(context), SurfaceHolder.Callback {
 	private var executor = Executors.newSingleThreadScheduledExecutor()
 	private var renderFuture: ScheduledFuture<*>? = null
 	private val paint = Paint()
-
 	private var isCanvasCleared = false
 
 
@@ -26,15 +29,37 @@ class GameSurfaceView(context: Context, private var gameplay: Gameplay, private 
 
 
 	override fun surfaceCreated(holder: SurfaceHolder) {
-		val exec = Executors.newSingleThreadScheduledExecutor()
-		executor = exec
-		renderFuture = exec.scheduleWithFixedDelay(
-			{ renderFrame(holder) }, 0, 1000L / gameplay.TARGET_FPS, TimeUnit.MILLISECONDS
-		)
+		run(holder)
 	}
 
 
 	override fun surfaceDestroyed(holder: SurfaceHolder) {
+		stop()
+	}
+
+
+	override fun surfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) {
+		// handle window resize and screen rotation if needed
+	}
+
+
+	/**
+	 * Starts the rendering loop on a separate thread.
+	 * The loop runs at a fixed rate defined by the TARGET_FPS constant.
+	 */
+	private fun run(holder: SurfaceHolder) {
+		val exec = Executors.newSingleThreadScheduledExecutor()
+		executor = exec
+		renderFuture = exec.scheduleWithFixedDelay(
+			{ render(holder) }, 0, 1000L / gameplay.TARGET_FPS, TimeUnit.MILLISECONDS
+		)
+	}
+
+
+	/**
+	 * Stops the rendering loop and shuts down the executor.
+	 */
+	private fun stop() {
 		renderFuture?.cancel(false)
 		renderFuture = null
 		executor?.shutdown()
@@ -42,34 +67,39 @@ class GameSurfaceView(context: Context, private var gameplay: Gameplay, private 
 	}
 
 
-	override fun surfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) {
-		// handle resize if your coordinate system needs it
-	}
-
-
-	private fun renderFrame(holder: SurfaceHolder) {
+	/**
+	 * The main function that accepts and validates the rendering commands, and renders them to the canvas,
+	 * and clears the canvas when the game is paused or stopped.
+	 */
+	private fun render(holder: SurfaceHolder) {
 		var drawCommands: DrawCommandList?
 
 		if (gameplay.isRunning() && !gameplay.isPaused()) {
+			// when running, accept the draw command list from the gameplay engine
 			drawCommands = gameplay.screenOutput
 			isCanvasCleared = false
 		} else if (!isCanvasCleared) {
+			// when paused or stopped, clear the canvas to the menu background color once, and stop drawing
 			drawCommands = DrawCommandList(backgroundColor = menuBackground)
 			isCanvasCleared = true
 		} else {
+			// the canvas is cleared, nothing else to do
 			return
 		}
 
 		val canvas = holder.lockCanvas() ?: return
 		try {
-			drawByCommands(canvas, drawCommands)
+			drawToCanvas(canvas, drawCommands)
 		} finally {
 			holder.unlockCanvasAndPost(canvas)
 		}
 	}
 
 
-	private fun drawByCommands(canvas: Canvas, commands: DrawCommandList?) {
+	/**
+	 * Draws the provided DrawCommandList to the given Canvas.
+	 */
+	private fun drawToCanvas(canvas: Canvas, commands: DrawCommandList?) {
 		if (commands == null) return
 
 		canvas.drawColor(commands.backgroundColor)
