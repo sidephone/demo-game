@@ -6,9 +6,10 @@ import android.graphics.Paint
 import android.util.Log
 import android.view.SurfaceHolder
 import android.view.SurfaceView
-import com.sidephone.demogame.engine.DrawCommand
-import com.sidephone.demogame.engine.DrawCommandList
+import com.sidephone.demogame.engine.graphics.DrawCommand
+import com.sidephone.demogame.engine.graphics.GameFrame
 import com.sidephone.demogame.engine.Gameplay
+import com.sidephone.demogame.settings.EngineSettings
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
@@ -59,10 +60,10 @@ class GameSurfaceView(context: Context, private var gameplay: Gameplay, private 
 		val exec = Executors.newSingleThreadScheduledExecutor()
 		executor = exec
 		renderFuture = exec.scheduleWithFixedDelay(
-			{ render(holder) }, 0, 1000L / gameplay.TARGET_FPS, TimeUnit.MILLISECONDS
+			{ render(holder) }, 0, 1000L / EngineSettings.TARGET_FPS, TimeUnit.MILLISECONDS
 		)
 
-		Log.d(LOG_TAG, "Rendering loop started at ${gameplay.TARGET_FPS} FPS")
+		Log.d(LOG_TAG, "Rendering loop started at ${EngineSettings.TARGET_FPS} FPS")
 	}
 
 
@@ -92,15 +93,15 @@ class GameSurfaceView(context: Context, private var gameplay: Gameplay, private 
 			return
 		}
 
-		var drawCommands: DrawCommandList?
+		var drawCommands: GameFrame?
 
 		if (gameplay.isRunning() && !gameplay.isPaused()) {
 			// when running, accept the draw command list from the gameplay engine
-			drawCommands = gameplay.screenOutput
+			drawCommands = gameplay.currentFrame
 			isCanvasCleared = false
 		} else if (!isCanvasCleared) {
 			// when paused or stopped, run once to clear the canvas with the menu background color
-			drawCommands = DrawCommandList(backgroundColor = menuBackground)
+			drawCommands = GameFrame(backgroundColor = menuBackground)
 			isCanvasCleared = true
 		} else {
 			// after clearing the canvas above, stop looping and drawing to save CPU cycles and battery
@@ -120,7 +121,7 @@ class GameSurfaceView(context: Context, private var gameplay: Gameplay, private 
 	/**
 	 * Draws the provided DrawCommandList to the given Canvas.
 	 */
-	private fun drawToCanvas(canvas: Canvas, commands: DrawCommandList?) {
+	private fun drawToCanvas(canvas: Canvas, commands: GameFrame?) {
 		if (commands == null) return
 
 		canvas.drawColor(commands.backgroundColor)

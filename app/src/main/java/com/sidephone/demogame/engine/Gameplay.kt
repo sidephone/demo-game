@@ -4,6 +4,11 @@ import android.util.Log
 import android.view.KeyEvent
 import androidx.annotation.MainThread
 import androidx.annotation.WorkerThread
+import com.sidephone.demogame.engine.graphics.DrawCommand
+import com.sidephone.demogame.engine.graphics.GameFrame
+import com.sidephone.demogame.engine.graphics.Ship
+import com.sidephone.demogame.engine.graphics.Space
+import com.sidephone.demogame.settings.EngineSettings
 import java.util.concurrent.Executors
 import java.util.concurrent.Future
 import kotlin.math.cos
@@ -18,8 +23,6 @@ class Gameplay {
 	private val LOG_TAG = Gameplay::class.java.simpleName
 
 	// game loop
-	private val TARGET_IPS = 60 // Advance game logic 60 times per second. Adjust as needed.
-	private val TICK_INTERVAL = 1000L / TARGET_IPS
 	private var executor = Executors.newSingleThreadScheduledExecutor()
 	private var engineLooper: Future<*>? = null
 	private var isPaused = false
@@ -31,9 +34,10 @@ class Gameplay {
 	@Volatile private var pressedKeys = setOf<Int>()
 
 	// graphics
-	val TARGET_FPS = 100 // adjust the smoothness as needed. Not necessarily the same as TICK_INTERVAL, which is for game logic.
-	@Volatile var screenOutput: DrawCommandList = DrawCommandList()
-	private val graphics = GameGraphics()
+
+
+	@Volatile var currentFrame: GameFrame = GameFrame()
+	private val graphics = Ship()
 	@Volatile private var firstIteration = true
 
 	// game actions and state
@@ -58,8 +62,8 @@ class Gameplay {
 	 */
 	fun reset() {
 		pressedKeys = setOf()
-		shipX = graphics.screenWidth / 2f
-		shipY = graphics.screenHeight / 2f
+		shipX = EngineSettings.SCREEN_WIDTH / 2f
+		shipY = EngineSettings.SCREEN_HEIGHT / 2f
 		shipDirection = -90 // degrees
 
 		movingForward = false
@@ -105,13 +109,13 @@ class Gameplay {
 		engineLooper = executor.scheduleWithFixedDelay(
 			{ advance() },
 			0,
-			TICK_INTERVAL,
+			1000L / EngineSettings.TARGET_IPS,
 			java.util.concurrent.TimeUnit.MILLISECONDS
 		)
 
 		onStarted()
 
-		Log.d(LOG_TAG, "Gameplay loop started at $TARGET_IPS iterations per second")
+		Log.d(LOG_TAG, "Gameplay loop started at ${EngineSettings.TARGET_IPS} iterations per second")
 	}
 
 
@@ -194,8 +198,8 @@ class Gameplay {
 
 	/**
 	 * The main game loop function. This is equivalent to a single step or "frame" in the game. It
-	 * is called repeatedly at a fixed interval (TICK_INTERVAL) to read the input, update state and
-	 * perform other game logic. Finally, the "render()" method draws the current state to the screen.
+	 * is called repeatedly at a fixed interval to read the input, update state and perform other game
+	 * logic. Finally, the "render()" method draws the current state to the screen.
 	 */
 	@WorkerThread
 	private fun advance() {
@@ -236,9 +240,9 @@ class Gameplay {
 
 
 	/**
-	 * This is the main method that draws to the screen. In this demo, we simply update a string that
-	 * represents the current game state, but it could draw graphics, update a canvas, or perform other
-	 * rendering tasks in a real game.
+	 * This is the main method that draws to the screen. In this demo, we draw a spaceship that can
+	 * move around the screen. The spaceship's position and direction are updated based on the pressed
+	 * keys.
 	 */
 	@WorkerThread
 	private fun render() {
@@ -259,10 +263,10 @@ class Gameplay {
 			shipX += (cos(Math.toRadians(shipDirection.toDouble())) * 5).toFloat()
 			shipY += (sin(Math.toRadians(shipDirection.toDouble())) * 5).toFloat()
 
-			if (shipX < 0) shipX = graphics.screenWidth
-			if (shipY < 0) shipY = graphics.screenHeight
-			if (shipX > graphics.screenWidth) shipX = 0f
-			if (shipY > graphics.screenHeight) shipY = 0f
+			if (shipX < 0) shipX = EngineSettings.SCREEN_WIDTH
+			if (shipY < 0) shipY = EngineSettings.SCREEN_HEIGHT
+			if (shipX > EngineSettings.SCREEN_WIDTH) shipX = 0f
+			if (shipY > EngineSettings.SCREEN_HEIGHT) shipY = 0f
 		}
 
 		if (firstIteration) {
@@ -275,9 +279,9 @@ class Gameplay {
 		}
 
 		val screenObjects = mutableListOf<DrawCommand>()
-		screenObjects.addAll(graphics.drawShip(shipX, shipY, shipDirection))
+		screenObjects.addAll(graphics.draw(shipX, shipY, shipDirection))
 
-		screenOutput = DrawCommandList(graphics.backgroundColor, screenObjects)
+		currentFrame = GameFrame(Space.BACKGROUND, screenObjects)
 	}
 
 

@@ -1,4 +1,4 @@
-package com.sidephone.demogame.engine
+package com.sidephone.demogame.engine.graphics
 
 sealed class DrawCommand {
 	data class Dot(val x: Float, val y: Float, val color: Int) : DrawCommand()
