@@ -2,6 +2,7 @@ package com.sidephone.demogame.engine
 
 import android.util.Log
 import android.view.KeyEvent
+import androidx.annotation.AnyThread
 import androidx.annotation.MainThread
 import androidx.annotation.WorkerThread
 import com.sidephone.demogame.engine.graphics.DrawCommand
@@ -27,6 +28,7 @@ class Gameplay {
 	private var engineLooper: Future<*>? = null
 	private var isPaused = false
 
+	// events
 	private var onPaused = {}
 	private var onStarted = {}
 
@@ -35,22 +37,20 @@ class Gameplay {
 
 	// graphics
 	@Volatile var currentFrame: GameFrame = GameFrame()
-	private val graphics = Ship()
 	@Volatile private var firstIteration = true
+	private val ship = Ship()
 
 	// game actions and state
-	private var viewportWidth = 1f
-	private var viewportHeight = 1f
+	@Volatile private var viewportWidth = 1f
+	@Volatile private var viewportHeight = 1f
 
 	private var shipX = 0f
 	private var shipY = 0f
-	private var shipDirection = 0 // degrees
-
+	private var shipDirection = 0.0 // degrees
 
 	private var movingForward = false
-	private var movingBackward = false
-	private var movingLeft = false
-	private var movingRight = false
+	private var turningLeft = false
+	private var turningRight = false
 
 
 	init {
@@ -61,16 +61,16 @@ class Gameplay {
 	/**
 	 * Set the initial state of the game. Call this whenever you need to restart the game.
 	 */
+	@MainThread
 	fun reset() {
 		pressedKeys = setOf()
-		shipX = viewportWidth / 2f
-		shipY = viewportHeight / 2f
-		shipDirection = -90 // degrees
+		shipX = GameplaySettings.getShipInitialPosition(viewportWidth)
+		shipY = GameplaySettings.getShipInitialPosition(viewportHeight)
+		shipDirection = GameplaySettings.SHIP_INITIAL_DIRECTION
 
 		movingForward = false
-		movingBackward = false
-		movingLeft = false
-		movingRight = false
+		turningLeft = false
+		turningRight = false
 
 		if (!isGameThreadAlive()) {
 			executor = Executors.newSingleThreadScheduledExecutor()
@@ -94,6 +94,10 @@ class Gameplay {
 	}
 
 
+	/**
+	 * Adjust the dimension of the game scene. All rendering will be performed using these.
+	 */
+	@AnyThread
 	fun setViewportSize(width: Int, height: Int) {
 		if (width <= 0 || height <= 0) {
 			Log.w(LOG_TAG, "Ignoring invalid viewport size: width=$width, height=$height. Must be positive.")
@@ -244,9 +248,8 @@ class Gameplay {
 		val keys = pressedKeys // make a copy for thread safety
 
 		movingForward = KeyEvent.KEYCODE_DPAD_UP in keys
-		movingBackward = KeyEvent.KEYCODE_DPAD_DOWN in keys
-		movingLeft = KeyEvent.KEYCODE_DPAD_LEFT in keys
-		movingRight = KeyEvent.KEYCODE_DPAD_RIGHT in keys
+		turningLeft = KeyEvent.KEYCODE_DPAD_LEFT in keys
+		turningRight = KeyEvent.KEYCODE_DPAD_RIGHT in keys
 	}
 
 
@@ -259,20 +262,27 @@ class Gameplay {
 	private fun render() {
 		var isSceneChanged = false
 
-		if (movingLeft) {
+		// maintain constant movement steps per frame, when TARGET_IPS is increased or decreased
+		val speedNormalizer = GameplaySettings.GAME_SPEED.toFloat() / GameplaySettings.TARGET_IPS.toFloat()
+		val moveSpeed = Ship.MOVE_SPEED * speedNormalizer
+		val turnsSpeed = Ship.TURN_SPEED * speedNormalizer
+
+		if (turningLeft) {
 			isSceneChanged = true
-			shipDirection -= 5
+			shipDirection -= turnsSpeed
 		}
 
-		if (movingRight) {
+		if (turningRight) {
 			isSceneChanged = true
-			shipDirection += 5
+			shipDirection += turnsSpeed
 		}
 
 		if (movingForward) {
 			isSceneChanged = true
-			shipX += (cos(Math.toRadians(shipDirection.toDouble())) * 5).toFloat()
-			shipY += (sin(Math.toRadians(shipDirection.toDouble())) * 5).toFloat()
+
+			val angle = Math.toRadians(shipDirection).toFloat()
+			shipX += cos(angle) * moveSpeed
+			shipY += sin(angle) * moveSpeed
 
 			if (shipX < 0) shipX = viewportWidth
 			if (shipY < 0) shipY = viewportHeight
@@ -290,7 +300,7 @@ class Gameplay {
 		}
 
 		val screenObjects = mutableListOf<DrawCommand>()
-		screenObjects.addAll(graphics.draw(shipX, shipY, shipDirection))
+		screenObjects.addAll(ship.draw(shipX, shipY, shipDirection.toFloat()))
 
 		currentFrame = GameFrame(Space.BACKGROUND, screenObjects)
 	}
@@ -302,14 +312,9 @@ class Gameplay {
 	 */
 	@WorkerThread
 	private fun validateMovement() {
-		if (movingForward && movingBackward) {
-			movingForward = false
-			movingBackward = false
-		}
-
-		if (movingLeft && movingRight) {
-			movingLeft = false
-			movingRight = false
+		if (turningLeft && turningRight) {
+			turningLeft = false
+			turningRight = false
 		}
 	}
 }

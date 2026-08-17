@@ -10,11 +10,13 @@ import kotlin.math.sin
 class Ship {
 	companion object {
 		const val RADIUS: Float = 15f
-		const val CANNON_LENGTH = RADIUS * 2f
+		const val CANNON_LENGTH = RADIUS * 2.2f
+		const val MOVE_SPEED = 3f // px per iteration
+		const val TURN_SPEED = 2.8f // degrees per iteration
 
 		object Colors {
 			const val FUSELAGE: Int = 0xFFFFFF00.toInt()
-			const val CANNON: Int = 0xFFFF9900.toInt()
+			const val CANNON: Int = 0xFFFFAA00.toInt()
 		}
 	}
 
@@ -23,8 +25,8 @@ class Ship {
 	 * Produces a list of DrawCommand objects that represent the spaceship at the given position and
 	 * direction. Add these commands to the GameFrame along with any other game entities you want to draw.
 	 */
-	fun draw(x: Float, y: Float, direction: Int): List<DrawCommand> {
-		val directionRad = direction * (Math.PI / 180).toFloat()
+	fun draw(x: Float, y: Float, direction: Float): List<DrawCommand> {
+		val directionRad = (direction * Math.PI / 180).toFloat()
 		val cannonCos = cos(directionRad)
 		val cannonSin = sin(directionRad)
 
