@@ -3,6 +3,7 @@ package com.sidephone.demogame.screens.game
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Paint
+import android.util.Log
 import android.view.SurfaceHolder
 import android.view.SurfaceView
 import com.sidephone.demogame.engine.DrawCommand
@@ -17,6 +18,8 @@ import java.util.concurrent.TimeUnit
  * Runs on a separate thread to avoid blocking other game logic.
  */
 class GameSurfaceView(context: Context, private var gameplay: Gameplay, private val menuBackground: Int) : SurfaceView(context), SurfaceHolder.Callback {
+	private val LOG_TAG = GameSurfaceView::class.java.simpleName
+
 	private var executor = Executors.newSingleThreadScheduledExecutor()
 	private var renderFuture: ScheduledFuture<*>? = null
 	private val paint = Paint()
@@ -29,7 +32,8 @@ class GameSurfaceView(context: Context, private var gameplay: Gameplay, private 
 
 
 	override fun surfaceCreated(holder: SurfaceHolder) {
-		run(holder)
+		run(holder) // run at least once to hide the Canvas on the first start
+		gameplay.setOnStartedCallback { run(holder) }
 	}
 
 
@@ -44,26 +48,38 @@ class GameSurfaceView(context: Context, private var gameplay: Gameplay, private 
 
 
 	/**
-	 * Starts the rendering loop on a separate thread.
-	 * The loop runs at a fixed rate defined by the TARGET_FPS constant.
+	 * Starts the rendering loop on a separate thread. The loop runs at a fixed rate defined by the
+	 * TARGET_FPS constant. Does nothing if the loop is already running.
 	 */
 	private fun run(holder: SurfaceHolder) {
+		if (renderFuture != null) {
+			return
+		}
+
 		val exec = Executors.newSingleThreadScheduledExecutor()
 		executor = exec
 		renderFuture = exec.scheduleWithFixedDelay(
 			{ render(holder) }, 0, 1000L / gameplay.TARGET_FPS, TimeUnit.MILLISECONDS
 		)
+
+		Log.d(LOG_TAG, "Rendering loop started at ${gameplay.TARGET_FPS} FPS")
 	}
 
 
 	/**
-	 * Stops the rendering loop and shuts down the executor.
+	 * Stops the rendering loop and shuts down the executor. Does nothing if the loop is not running.
 	 */
 	private fun stop() {
+		if (renderFuture == null) {
+			return
+		}
+
 		renderFuture?.cancel(false)
 		renderFuture = null
 		executor?.shutdown()
 		executor = null
+
+		Log.d(LOG_TAG, "Rendering loop stopped")
 	}
 
 
@@ -72,6 +88,10 @@ class GameSurfaceView(context: Context, private var gameplay: Gameplay, private 
 	 * and clears the canvas when the game is paused or stopped.
 	 */
 	private fun render(holder: SurfaceHolder) {
+		if (!holder.surface.isValid) {
+			return
+		}
+
 		var drawCommands: DrawCommandList?
 
 		if (gameplay.isRunning() && !gameplay.isPaused()) {
@@ -79,11 +99,12 @@ class GameSurfaceView(context: Context, private var gameplay: Gameplay, private 
 			drawCommands = gameplay.screenOutput
 			isCanvasCleared = false
 		} else if (!isCanvasCleared) {
-			// when paused or stopped, clear the canvas to the menu background color once, and stop drawing
+			// when paused or stopped, run once to clear the canvas with the menu background color
 			drawCommands = DrawCommandList(backgroundColor = menuBackground)
 			isCanvasCleared = true
 		} else {
-			// the canvas is cleared, nothing else to do
+			// after clearing the canvas above, stop looping and drawing to save CPU cycles and battery
+			stop()
 			return
 		}
 

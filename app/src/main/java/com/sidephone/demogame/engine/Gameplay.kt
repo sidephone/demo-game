@@ -18,11 +18,14 @@ class Gameplay {
 	private val LOG_TAG = Gameplay::class.java.simpleName
 
 	// game loop
-	private val TICK_INTERVAL = 1000L / 60L // Advance game logic about 60 times per second. Adjust as needed.
+	private val TARGET_IPS = 60 // Advance game logic 60 times per second. Adjust as needed.
+	private val TICK_INTERVAL = 1000L / TARGET_IPS
 	private var executor = Executors.newSingleThreadScheduledExecutor()
 	private var engineLooper: Future<*>? = null
 	private var isPaused = false
+
 	private var onPaused = {}
+	private var onStarted = {}
 
 	// input handling
 	@Volatile private var pressedKeys = setOf<Int>()
@@ -95,6 +98,7 @@ class Gameplay {
 			return
 		}
 
+
 		isPaused = false
 		firstIteration = true
 
@@ -105,7 +109,9 @@ class Gameplay {
 			java.util.concurrent.TimeUnit.MILLISECONDS
 		)
 
-		Log.d(LOG_TAG, "Started the game loop with tick interval: $TICK_INTERVAL ms")
+		onStarted()
+
+		Log.d(LOG_TAG, "Gameplay loop started at $TARGET_IPS iterations per second")
 	}
 
 
@@ -122,7 +128,7 @@ class Gameplay {
 		isPaused = true
 		onPaused()
 
-		Log.d(LOG_TAG, "Paused the game loop")
+		Log.d(LOG_TAG, "Gameplay loop paused")
 	}
 
 
@@ -134,7 +140,7 @@ class Gameplay {
 	fun stop() {
 		isPaused = false
 		executor.shutdownNow()
-		Log.d(LOG_TAG, "Stopped the game loop")
+		Log.d(LOG_TAG, "Gameplay loop stopped")
 	}
 
 
@@ -163,6 +169,16 @@ class Gameplay {
 	@MainThread
 	fun setOnPausedCallback(callback: () -> Unit): Gameplay {
 		onPaused = callback
+		return this
+	}
+
+
+	/**
+	 * Set an optional callback to be invoked immediately before the game starts.
+	 */
+	@MainThread
+	fun setOnStartedCallback(callback: () -> Unit): Gameplay {
+		onStarted = callback
 		return this
 	}
 
