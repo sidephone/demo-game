@@ -17,9 +17,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.sidephone.demogame.engine.Gamepad
 import com.sidephone.demogame.engine.Gameplay
-import com.sidephone.demogame.screens.GameScreen
-import com.sidephone.demogame.screens.SettingsScreen
 import com.sidephone.demogame.screens.MainMenuScreen
+import com.sidephone.demogame.screens.SettingsScreen
+import com.sidephone.demogame.screens.game.GameScreen
 import com.sidephone.demogame.ui.theme.DemogameTheme
 
 
@@ -55,6 +55,8 @@ class MainActivity : ComponentActivity() {
 
 				Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
 					Box(modifier = Modifier.padding(innerPadding)) {
+						GameScreen(gameplay) // Keep this in memory due to an Android bug. See below.
+
 						when (currentScreen) {
 							Screen.Menu -> MainMenuScreen(
 								isGamePaused = isGamePaused,
@@ -69,7 +71,7 @@ class MainActivity : ComponentActivity() {
 
 									gamepad.reset()
 
-									if (!gameplay.isPaused()) gameplay = Gameplay()
+									if (!gameplay.isPaused()) gameplay.reset()
 									gameplay
 										.setOnPausedCallback {
 											isGamePaused = gameplay.isPaused()
@@ -78,7 +80,13 @@ class MainActivity : ComponentActivity() {
 										.start()
 								},
 							)
-							Screen.Game -> GameScreen(gameplay)
+							Screen.Game -> {
+								// Due to an Android bug, we initialize the screen at the beginning and keep the
+								// object alive all the time. Otherwise, we can't make it render after returning from
+								// paused state, because its surfaceCreated() method is not called again.
+								// See: https://slack-chats.kotlinlang.org/t/12312231/funky-issue-i-ve-got-i-m-using-androidview-with-a-surfacevie
+								// See: https://issuetracker.google.com/issues/285718058
+							}
 							Screen.Settings -> SettingsScreen()
 						}
 					}

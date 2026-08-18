@@ -2,12 +2,18 @@ package com.sidephone.demogame.engine
 
 import android.util.Log
 import android.view.KeyEvent
+import androidx.annotation.AnyThread
 import androidx.annotation.MainThread
 import androidx.annotation.WorkerThread
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
+import com.sidephone.demogame.engine.graphics.DrawCommand
+import com.sidephone.demogame.engine.graphics.GameFrame
+import com.sidephone.demogame.engine.graphics.Ship
+import com.sidephone.demogame.engine.graphics.Space
+import com.sidephone.demogame.settings.GameplaySettings
 import java.util.concurrent.Executors
 import java.util.concurrent.Future
+import kotlin.math.cos
+import kotlin.math.sin
 
 
 /**
@@ -18,32 +24,58 @@ class Gameplay {
 	private val LOG_TAG = Gameplay::class.java.simpleName
 
 	// game loop
-	private val TICK_INTERVAL = 1000L / 60L // Advance game logic about 60 times per second. Adjust as needed.
-	private val executor = Executors.newSingleThreadScheduledExecutor()
+	private var executor = Executors.newSingleThreadScheduledExecutor()
 	private var engineLooper: Future<*>? = null
 	private var isPaused = false
+
+	// events
 	private var onPaused = {}
+	private var onStarted = {}
 
 	// input handling
 	@Volatile private var pressedKeys = setOf<Int>()
 
+	// graphics
+	@Volatile var currentFrame: GameFrame = GameFrame()
+	@Volatile private var firstIteration = true
+	private val ship = Ship()
+
 	// game actions and state
+	@Volatile private var viewportWidth = 1f
+	@Volatile private var viewportHeight = 1f
+
+	private var shipX = 0f
+	private var shipY = 0f
+	private var shipDirection = 0.0 // degrees
+
 	private var movingForward = false
-	private var movingBackward = false
-	private var movingLeft = false
-	private var movingRight = false
-	private var shooting = false
-	private var jumping = false
+	private var turningLeft = false
+	private var turningRight = false
 
-	private var score = 0
-	private val SCORE_UPDATE_INTERVAL = 350L
-	private var lastScoreUpdateTime = 0L
 
-	// output
-	data class GameState(val screenOutput: String)
+	init {
+	    reset()
+	}
 
-	private val _state = MutableStateFlow(GameState(screenOutput = ""))
-	val state: StateFlow<GameState> = _state
+
+	/**
+	 * Set the initial state of the game. Call this whenever you need to restart the game.
+	 */
+	@MainThread
+	fun reset() {
+		pressedKeys = setOf()
+		shipX = GameplaySettings.shipInitialPosition(viewportWidth)
+		shipY = GameplaySettings.shipInitialPosition(viewportHeight)
+		shipDirection = GameplaySettings.SHIP_INITIAL_DIRECTION
+
+		movingForward = false
+		turningLeft = false
+		turningRight = false
+
+		if (!isGameThreadAlive()) {
+			executor = Executors.newSingleThreadScheduledExecutor()
+		}
+	}
 
 
 	/**
@@ -63,6 +95,21 @@ class Gameplay {
 
 
 	/**
+	 * Adjust the dimension of the game scene. All rendering will be performed using these.
+	 */
+	@AnyThread
+	fun setViewportSize(width: Int, height: Int) {
+		if (width <= 0 || height <= 0) {
+			Log.w(LOG_TAG, "Ignoring invalid viewport size: width=$width, height=$height. Must be positive.")
+			return
+		}
+
+		viewportWidth = width.toFloat()
+		viewportHeight = height.toFloat()
+	}
+
+
+	/**
 	 * Start or resume the game loop, or if already running, do nothing.
 	 */
 	@MainThread
@@ -72,14 +119,18 @@ class Gameplay {
 		}
 
 		isPaused = false
+		firstIteration = true
+
 		engineLooper = executor.scheduleWithFixedDelay(
 			{ advance() },
 			0,
-			TICK_INTERVAL,
+			1000L / GameplaySettings.TARGET_IPS,
 			java.util.concurrent.TimeUnit.MILLISECONDS
 		)
 
-		Log.d(LOG_TAG, "Started the game loop with tick interval: $TICK_INTERVAL ms")
+		onStarted()
+
+		Log.d(LOG_TAG, "Gameplay loop started at ${GameplaySettings.TARGET_IPS} iterations per second")
 	}
 
 
@@ -96,7 +147,7 @@ class Gameplay {
 		isPaused = true
 		onPaused()
 
-		Log.d(LOG_TAG, "Paused the game loop")
+		Log.d(LOG_TAG, "Gameplay loop paused")
 	}
 
 
@@ -108,7 +159,7 @@ class Gameplay {
 	fun stop() {
 		isPaused = false
 		executor.shutdownNow()
-		Log.d(LOG_TAG, "Stopped the game loop")
+		Log.d(LOG_TAG, "Gameplay loop stopped")
 	}
 
 
@@ -142,6 +193,16 @@ class Gameplay {
 
 
 	/**
+	 * Set an optional callback to be invoked immediately before the game starts.
+	 */
+	@MainThread
+	fun setOnStartedCallback(callback: () -> Unit): Gameplay {
+		onStarted = callback
+		return this
+	}
+
+
+	/**
 	 * Returns true when the game thread executor is still working.
 	 */
 	@MainThread
@@ -152,8 +213,8 @@ class Gameplay {
 
 	/**
 	 * The main game loop function. This is equivalent to a single step or "frame" in the game. It
-	 * is called repeatedly at a fixed interval (TICK_INTERVAL) to read the input, update state and
-	 * perform other game logic. Finally, the "render()" method draws the current state to the screen.
+	 * is called repeatedly at a fixed interval to read the input, update state and perform other game
+	 * logic. Finally, the "render()" method draws the current state to the screen.
 	 */
 	@WorkerThread
 	private fun advance() {
@@ -161,7 +222,6 @@ class Gameplay {
 
 		// optionally, do these at even longer intervals to save resources, e.g., every 100ms or 500ms
 		validateMovement()
-		updateScore()
 		render()
 	}
 
@@ -188,79 +248,73 @@ class Gameplay {
 		val keys = pressedKeys // make a copy for thread safety
 
 		movingForward = KeyEvent.KEYCODE_DPAD_UP in keys
-		movingBackward = KeyEvent.KEYCODE_DPAD_DOWN in keys
-		movingLeft = KeyEvent.KEYCODE_DPAD_LEFT in keys
-		movingRight = KeyEvent.KEYCODE_DPAD_RIGHT in keys
-		jumping = KeyEvent.KEYCODE_BUTTON_A in keys
-		shooting = KeyEvent.KEYCODE_BUTTON_B in keys
+		turningLeft = KeyEvent.KEYCODE_DPAD_LEFT in keys
+		turningRight = KeyEvent.KEYCODE_DPAD_RIGHT in keys
 	}
 
 
 	/**
-	 * This is the main method that draws to the screen. In this demo, we simply update a string that
-	 * represents the current game state, but it could draw graphics, update a canvas, or perform other
-	 * rendering tasks in a real game.
+	 * This is the main method that draws to the screen. In this demo, we draw a spaceship that can
+	 * move around the screen. The spaceship's position and direction are updated based on the pressed
+	 * keys.
 	 */
 	@WorkerThread
 	private fun render() {
-		var actions = "Moving: "
+		var isSceneChanged = false
 
-		actions += if (movingForward)
-			"Forward"
-		else if (movingBackward)
-			"Backward"
-		else
-			"No"
+		// maintain constant movement steps per frame, when TARGET_IPS is increased or decreased
+		val speedNormalizer = GameplaySettings.GAME_SPEED.toFloat() / GameplaySettings.TARGET_IPS.toFloat()
+		val moveSpeed = Ship.MOVE_SPEED * speedNormalizer
+		val turnsSpeed = Ship.TURN_SPEED * speedNormalizer
 
-		actions += "\nTurning: " + if (movingLeft)
-			"Left"
-		else if (movingRight)
-			"Right"
-		else
-			"No"
-
-		actions += "\nJumping: " + if (jumping) "Yes" else "No"
-		actions += "\nShooting: " + if (shooting) "Yes" else "No"
-
-		val newScreenOutput = "-=== GAME STATE ===-\n\n$actions\n\nScore: $score"
-		if (newScreenOutput != _state.value.screenOutput) {
-			_state.value = GameState(newScreenOutput)
+		if (turningLeft) {
+			isSceneChanged = true
+			shipDirection -= turnsSpeed
 		}
+
+		if (turningRight) {
+			isSceneChanged = true
+			shipDirection += turnsSpeed
+		}
+
+		if (movingForward) {
+			isSceneChanged = true
+
+			val angle = Math.toRadians(shipDirection).toFloat()
+			shipX += cos(angle) * moveSpeed
+			shipY += sin(angle) * moveSpeed
+
+			if (shipX < 0) shipX = viewportWidth
+			if (shipY < 0) shipY = viewportHeight
+			if (shipX > viewportWidth) shipX = 0f
+			if (shipY > viewportHeight) shipY = 0f
+		}
+
+		if (firstIteration) {
+			firstIteration = false
+			isSceneChanged = true
+		}
+
+		if (!isSceneChanged) {
+			return
+		}
+
+		val screenObjects = mutableListOf<DrawCommand>()
+		screenObjects.addAll(ship.draw(shipX, shipY, shipDirection.toFloat()))
+
+		currentFrame = GameFrame(Space.BACKGROUND, screenObjects)
 	}
 
 
 	/**
-	 * An example of input validation. In this demo, we simply ensure that the player cannot move forward and backward
-	 * at the same time, or left and right at the same time.
+	 * An example of input validation. In this demo, we simply ensure that the player cannot turn left
+	 * and right at the same time.
 	 */
 	@WorkerThread
 	private fun validateMovement() {
-		if (movingForward && movingBackward) {
-			movingForward = false
-			movingBackward = false
+		if (turningLeft && turningRight) {
+			turningLeft = false
+			turningRight = false
 		}
-
-		if (movingLeft && movingRight) {
-			movingLeft = false
-			movingRight = false
-		}
-	}
-
-
-	/**
-	 * Update the score based on the current actions.
-	 */
-	@WorkerThread
-	private fun updateScore() {
-		val now = System.currentTimeMillis()
-		if (now - lastScoreUpdateTime < SCORE_UPDATE_INTERVAL) {
-			return
-		}
-		lastScoreUpdateTime = now
-
-		if (movingForward || movingLeft || movingRight) score += 1
-		if (movingBackward) score -= 1
-		if (shooting) score += 5
-		if (jumping) score += 3
 	}
 }
