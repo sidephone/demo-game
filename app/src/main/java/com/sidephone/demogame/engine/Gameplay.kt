@@ -307,8 +307,8 @@ class Gameplay {
 
 
 	/**
-	 * An example of input validation. In this demo, we simply ensure that the player cannot move forward and backward
-	 * at the same time, or left and right at the same time.
+	 * An example of input validation. In this demo, we simply ensure that the player cannot turn left
+	 * and right at the same time.
 	 */
 	@WorkerThread
 	private fun validateMovement() {
