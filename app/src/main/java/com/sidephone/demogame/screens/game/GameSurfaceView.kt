@@ -77,9 +77,7 @@ class GameSurfaceView(context: Context, private var gameplay: Gameplay, private 
 
 		renderFuture?.cancel(false)
 		renderFuture = null
-		executor?.shutdown()
-		executor = null
-
+		executor.shutdown()
 		Log.d(LOG_TAG, "Rendering loop stopped")
 	}
 
