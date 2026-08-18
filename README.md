@@ -1,7 +1,7 @@
 # Sidephone Demo Game
 This is a minimal game example with 2D vector graphics drawn on a Canvas, and handling of Sidephone's gamepad tile. It is intended to help you get started with your own game development on Sidephone.
 
-_Feel free to restructure the project to your needs, add more screens, custom controls, a different 2D or 3D engine, add sounds and other resources, write tests, and so on. This project is intended to help you get started quicker, rather than being hard development requirement._
+Feel free to restructure the project to your needs, add more screens, custom controls, a different 2D or 3D engine, add sounds and other resources, write tests, and so on. This project is intended to help you get started quicker, rather than being hard development requirement.
 
 ## Project Structure
 The code is located in `app/src/main/java/com/sidephone/demogame/`. See each file for more details.
