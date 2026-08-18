@@ -60,7 +60,7 @@ class GameSurfaceView(context: Context, private var gameplay: Gameplay, private 
 		val exec = Executors.newSingleThreadScheduledExecutor()
 		executor = exec
 		renderFuture = exec.scheduleWithFixedDelay(
-			{ render(holder) }, 0, 1000L / GameplaySettings.TARGET_FPS, TimeUnit.MILLISECONDS
+			{ render(holder) }, 0, 1_000_000_000L / GameplaySettings.TARGET_FPS, TimeUnit.NANOSECONDS
 		)
 
 		Log.d(LOG_TAG, "Rendering loop started at ${GameplaySettings.TARGET_FPS} FPS")
