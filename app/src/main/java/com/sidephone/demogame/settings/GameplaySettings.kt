@@ -6,5 +6,5 @@ object GameplaySettings {
 	const val GAME_SPEED = 100 // %
 
 	const val SHIP_INITIAL_DIRECTION = -90.0 // degrees
-	val getShipInitialPosition: (Float) -> Float = { viewportSize: Float -> viewportSize / 2f }
+	val shipInitialPosition: (Float) -> Float = { viewportSize: Float -> viewportSize / 2f }
 }

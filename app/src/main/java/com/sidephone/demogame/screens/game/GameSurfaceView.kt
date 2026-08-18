@@ -15,8 +15,8 @@ import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 
 /**
- * A Canvas wrapper that accepts a DrawCommandList from the Gameplay engine and renders it to the screen.
- * Runs on a separate thread to avoid blocking other game logic.
+ * A Canvas wrapper that accepts a list of draw commands from the Gameplay engine and renders it to
+ * the screen.Runs on a separate thread to avoid blocking other game logic.
  */
 class GameSurfaceView(context: Context, private var gameplay: Gameplay, private val menuBackground: Int) : SurfaceView(context), SurfaceHolder.Callback {
 	private val LOG_TAG = GameSurfaceView::class.java.simpleName
@@ -93,7 +93,7 @@ class GameSurfaceView(context: Context, private var gameplay: Gameplay, private 
 
 		var drawCommands: GameFrame?
 
-		if (gameplay.isRunning() && !gameplay.isPaused()) {
+		if (gameplay.isRunning()) {
 			// when running, accept the draw command list from the gameplay engine
 			drawCommands = gameplay.currentFrame
 			isCanvasCleared = false
@@ -117,7 +117,7 @@ class GameSurfaceView(context: Context, private var gameplay: Gameplay, private 
 
 
 	/**
-	 * Draws the provided DrawCommandList to the given Canvas.
+	 * Draws the provided command list to the given Canvas.
 	 */
 	private fun drawToCanvas(canvas: Canvas, commands: GameFrame?) {
 		if (commands == null) return

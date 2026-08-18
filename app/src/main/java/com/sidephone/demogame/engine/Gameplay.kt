@@ -64,8 +64,8 @@ class Gameplay {
 	@MainThread
 	fun reset() {
 		pressedKeys = setOf()
-		shipX = GameplaySettings.getShipInitialPosition(viewportWidth)
-		shipY = GameplaySettings.getShipInitialPosition(viewportHeight)
+		shipX = GameplaySettings.shipInitialPosition(viewportWidth)
+		shipY = GameplaySettings.shipInitialPosition(viewportHeight)
 		shipDirection = GameplaySettings.SHIP_INITIAL_DIRECTION
 
 		movingForward = false
