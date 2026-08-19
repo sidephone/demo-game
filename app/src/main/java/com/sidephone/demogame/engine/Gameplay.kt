@@ -73,6 +73,9 @@ class Gameplay {
 		turningRight = false
 
 		if (!isGameThreadAlive()) {
+			if (!executor.isShutdown && !executor.isTerminated) {
+				executor.shutdownNow()
+			}
 			executor = Executors.newSingleThreadScheduledExecutor()
 		}
 	}
@@ -153,7 +156,7 @@ class Gameplay {
 
 	/**
 	 * Stop the game loop and release resources. After calling this, you can not resume the game
-	 * anymore. You must create a new instance of Gameplay to start a new game.
+	 * anymore, you can only use "reset()" to start a new game.
 	 */
 	@MainThread
 	fun stop() {
