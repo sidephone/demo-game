@@ -33,6 +33,7 @@ class GameSurfaceView(context: Context, private var gameplay: Gameplay, private 
 
 
 	override fun surfaceCreated(holder: SurfaceHolder) {
+		isCanvasCleared = false
 		run(holder) // run at least once to hide the Canvas on the first start
 		gameplay.setOnStartedCallback { run(holder) }
 	}
