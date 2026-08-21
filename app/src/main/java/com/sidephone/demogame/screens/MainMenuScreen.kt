@@ -35,12 +35,12 @@ fun MainMenuScreen(
 	val firstButtonFocusRequester = remember { FocusRequester() }
 
 	Column(
-		modifier = modifier
+		modifier = Modifier
 			.fillMaxSize()
 			.verticalScroll(rememberScrollState())
 			.padding(Dimens.MainMenuButtonContainerPadding),
-		verticalArrangement = Arrangement.Top,
-		horizontalAlignment = Alignment.CenterHorizontally
+		horizontalAlignment = Alignment.CenterHorizontally,
+		verticalArrangement = Arrangement.Top
 	) {
 		Text(
 			text = stringResource(R.string.app_name),
@@ -49,7 +49,8 @@ fun MainMenuScreen(
 			modifier = Modifier.padding(
 				top = Dimens.MainMenuTitlePaddingTop,
 				bottom = Dimens.MainMenuTitlePaddingBottom
-			)
+			),
+			color = MaterialTheme.colorScheme.onBackground
 		)
 
 		val buttonModifiers = Modifier

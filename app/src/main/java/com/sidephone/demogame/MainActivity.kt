@@ -8,13 +8,14 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import com.sidephone.demogame.engine.Gamepad
 import com.sidephone.demogame.engine.Gameplay
 import com.sidephone.demogame.screens.MainMenuScreen
@@ -39,6 +40,8 @@ class MainActivity : ComponentActivity() {
 		super.onCreate(savedInstanceState)
 
 		enableEdgeToEdge()
+		switchToFullScreen()
+
 		setContent {
 			DemogameTheme {
 				var currentScreen by remember { mutableStateOf(Screen.Menu) }
@@ -53,42 +56,40 @@ class MainActivity : ComponentActivity() {
 					}
 				}
 
-				Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-					Box(modifier = Modifier.padding(innerPadding)) {
-						GameScreen(gameplay) // Keep this in memory due to an Android bug. See below.
+				Box(modifier = Modifier.fillMaxSize()) {
+					GameScreen(gameplay) // Keep this in memory due to an Android bug. See below.
 
-						when (currentScreen) {
-							Screen.Menu -> MainMenuScreen(
-								isGamePaused = isGamePaused,
-								onSettings = { currentScreen = Screen.Settings },
-								onExit = { finish() },
-								onEndGame = {
-									gameplay.stop()
-									isGamePaused = gameplay.isPaused()
-								},
-								onNewGame = {
-									currentScreen = Screen.Game
+					when (currentScreen) {
+						Screen.Menu -> MainMenuScreen(
+							isGamePaused = isGamePaused,
+							onSettings = { currentScreen = Screen.Settings },
+							onExit = { finish() },
+							onEndGame = {
+								gameplay.stop()
+								isGamePaused = gameplay.isPaused()
+							},
+							onNewGame = {
+								currentScreen = Screen.Game
 
-									gamepad.reset()
+								gamepad.reset()
 
-									if (!gameplay.isPaused()) gameplay.reset()
-									gameplay
-										.setOnPausedCallback {
-											isGamePaused = gameplay.isPaused()
-											currentScreen = Screen.Menu
-										}
-										.start()
-								},
-							)
-							Screen.Game -> {
-								// Due to an Android bug, we initialize the screen at the beginning and keep the
-								// object alive all the time. Otherwise, we can't make it render after returning from
-								// paused state, because its surfaceCreated() method is not called again.
-								// See: https://slack-chats.kotlinlang.org/t/12312231/funky-issue-i-ve-got-i-m-using-androidview-with-a-surfacevie
-								// See: https://issuetracker.google.com/issues/285718058
-							}
-							Screen.Settings -> SettingsScreen()
+								if (!gameplay.isPaused()) gameplay.reset()
+								gameplay
+									.setOnPausedCallback {
+										isGamePaused = gameplay.isPaused()
+										currentScreen = Screen.Menu
+									}
+									.start()
+							},
+						)
+						Screen.Game -> {
+						// Due to an Android bug, we initialize the screen at the beginning and keep the
+						// object alive all the time. Otherwise, we can't make it render after returning from
+						// paused state, because its surfaceCreated() method is not called again.
+						// See: https://slack-chats.kotlinlang.org/t/12312231/funky-issue-i-ve-got-i-m-using-androidview-with-a-surfacevie
+						// See: https://issuetracker.google.com/issues/285718058
 						}
+						Screen.Settings -> SettingsScreen({ currentScreen = Screen.Menu })
 					}
 				}
 			}
@@ -119,5 +120,14 @@ class MainActivity : ComponentActivity() {
 		}
 
 		return super.onKeyUp(keyCode, event)
+	}
+
+
+	private fun switchToFullScreen() {
+		WindowCompat.setDecorFitsSystemWindows(window, false)
+
+		val controller = WindowInsetsControllerCompat(window, window.decorView)
+		controller.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+		controller.hide(WindowInsetsCompat.Type.statusBars() or WindowInsetsCompat.Type.navigationBars())
 	}
 }
