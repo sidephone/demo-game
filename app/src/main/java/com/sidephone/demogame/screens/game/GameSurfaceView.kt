@@ -19,7 +19,9 @@ import java.util.concurrent.TimeUnit
  * the screen.Runs on a separate thread to avoid blocking other game logic.
  */
 class GameSurfaceView(context: Context, private var gameplay: Gameplay, private val menuBackground: Int) : SurfaceView(context), SurfaceHolder.Callback {
-	private val LOG_TAG = GameSurfaceView::class.java.simpleName
+	companion object {
+		private val LOG_TAG = GameSurfaceView::class.java.simpleName
+	}
 
 	private var executor = Executors.newSingleThreadScheduledExecutor()
 	private var renderFuture: ScheduledFuture<*>? = null
@@ -127,6 +129,18 @@ class GameSurfaceView(context: Context, private var gameplay: Gameplay, private 
 
 		for (command in commands.commands) {
 			when (command) {
+				is DrawCommand.Arc -> {
+					paint.color = command.color
+					paint.style = if (command.filled) Paint.Style.FILL else Paint.Style.STROKE
+					val rectF = android.graphics.RectF(
+						command.cx - command.radius,
+						command.cy - command.radius,
+						command.cx + command.radius,
+						command.cy + command.radius
+					)
+					canvas.drawArc(rectF, command.startAngle, command.sweepAngle, command.filled, paint)
+				}
+
 				is DrawCommand.Dot -> {
 					paint.color = command.color
 					canvas.drawPoint(command.x, command.y, paint)
