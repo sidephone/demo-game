@@ -221,11 +221,15 @@ class Gameplay {
 	 */
 	@WorkerThread
 	private fun advance() {
-		processGameInput()
+		try {
+			processGameInput()
 
-		// optionally, do these at even longer intervals to save resources, e.g., every 100ms or 500ms
-		validateMovement()
-		render()
+			// optionally, do these at even longer intervals to save resources, e.g., every 100ms or 500ms
+			validateMovement()
+			render()
+		} catch (e: Exception) {
+			Log.e(LOG_TAG, "Failed advancing ahead gameplay. ${e.message}", e)
+		}
 	}
 
 
