@@ -3,7 +3,6 @@ package com.sidephone.demogame.screens
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -13,11 +12,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
 import com.sidephone.demogame.R
+import com.sidephone.demogame.ui.components.MenuButton
+import com.sidephone.demogame.ui.modifiers.gamepadClickableButton
 import com.sidephone.demogame.ui.theme.Dimens
-import com.sidephone.demogame.util.MenuButton
-import com.sidephone.demogame.util.clickableWithGamepadStart
+import com.sidephone.snake.ui.components.MenuTitle
 
 @Composable
 fun SettingsScreen(onBack: () -> Unit) {
@@ -29,16 +28,7 @@ fun SettingsScreen(onBack: () -> Unit) {
 		horizontalAlignment = Alignment.CenterHorizontally,
 		verticalArrangement = Arrangement.Top
 	) {
-		Text(
-			text = stringResource(R.string.menu_settings),
-			style = MaterialTheme.typography.headlineMedium,
-			textAlign = TextAlign.Center,
-			modifier = Modifier.padding(
-				top = Dimens.MainMenuTitlePaddingTop,
-				bottom = Dimens.MainMenuTitlePaddingBottom
-			),
-			color = MaterialTheme.colorScheme.onBackground
-		)
+		MenuTitle(text = stringResource(R.string.main_settings))
 
 		Text(
 			text = "No settings available yet.",
@@ -49,15 +39,8 @@ fun SettingsScreen(onBack: () -> Unit) {
 
 		MenuButton(
 			onClick = onBack,
-			modifier = Modifier.fillMaxWidth()
-			.padding(
-				bottom = Dimens.MainMenuButtonPaddingBottom,
-				start = Dimens.MainMenuButtonPaddingHorizontal,
-				end = Dimens.MainMenuButtonPaddingHorizontal
-			)
-			.clickableWithGamepadStart(onBack)
-		) {
-			Text(stringResource(R.string.menu_back))
-		}
+			modifier = Modifier.gamepadClickableButton(onBack),
+			text = R.string.main_back
+		)
 	}
 }

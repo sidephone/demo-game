@@ -1,6 +1,7 @@
 package com.sidephone.demogame.ui.theme
 
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 
 object Dimens {
 	val MainMenuTitlePaddingTop = 16.dp
@@ -8,6 +9,6 @@ object Dimens {
 
 	val MainMenuButtonContainerPadding = 24.dp
 
-	val MainMenuButtonPaddingBottom = 12.dp
-	val MainMenuButtonPaddingHorizontal = 32.dp
+	val MainMenuButtonPaddingBottom = 3.dp
+	val MainMenuButtonPaddingHorizontal = 24.dp
 }

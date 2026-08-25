@@ -9,7 +9,7 @@ import android.view.SurfaceView
 import com.sidephone.demogame.engine.Gameplay
 import com.sidephone.demogame.engine.graphics.DrawCommand
 import com.sidephone.demogame.engine.graphics.GameFrame
-import com.sidephone.demogame.settings.GameplaySettings
+import com.sidephone.demogame.settings.Settings
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
@@ -63,10 +63,10 @@ class GameSurfaceView(context: Context, private var gameplay: Gameplay, private 
 		val exec = Executors.newSingleThreadScheduledExecutor()
 		executor = exec
 		renderFuture = exec.scheduleWithFixedDelay(
-			{ render(holder) }, 0, 1_000_000_000L / GameplaySettings.TARGET_FPS, TimeUnit.NANOSECONDS
+			{ render(holder) }, 0, 1_000_000_000L / Settings.TARGET_FPS, TimeUnit.NANOSECONDS
 		)
 
-		Log.d(LOG_TAG, "Rendering loop started at ${GameplaySettings.TARGET_FPS} FPS")
+		Log.d(LOG_TAG, "Rendering loop started at ${Settings.TARGET_FPS} FPS")
 	}
 
 

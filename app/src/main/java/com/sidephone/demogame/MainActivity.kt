@@ -89,7 +89,7 @@ class MainActivity : ComponentActivity() {
 						// See: https://slack-chats.kotlinlang.org/t/12312231/funky-issue-i-ve-got-i-m-using-androidview-with-a-surfacevie
 						// See: https://issuetracker.google.com/issues/285718058
 						}
-						Screen.Settings -> SettingsScreen({ currentScreen = Screen.Menu })
+						Screen.Settings -> SettingsScreen { currentScreen = Screen.Menu }
 					}
 				}
 			}

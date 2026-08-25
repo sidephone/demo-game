@@ -7,9 +7,9 @@ import androidx.annotation.MainThread
 import androidx.annotation.WorkerThread
 import com.sidephone.demogame.engine.graphics.DrawCommand
 import com.sidephone.demogame.engine.graphics.GameFrame
-import com.sidephone.demogame.engine.graphics.Ship
-import com.sidephone.demogame.engine.graphics.Space
-import com.sidephone.demogame.settings.GameplaySettings
+import com.sidephone.demogame.engine.entities.Ship
+import com.sidephone.demogame.engine.entities.Space
+import com.sidephone.demogame.settings.Settings
 import java.util.concurrent.Executors
 import java.util.concurrent.Future
 import kotlin.math.cos
@@ -64,9 +64,9 @@ class Gameplay {
 	@MainThread
 	fun reset() {
 		pressedKeys = setOf()
-		shipX = GameplaySettings.shipInitialPosition(viewportWidth)
-		shipY = GameplaySettings.shipInitialPosition(viewportHeight)
-		shipDirection = GameplaySettings.SHIP_INITIAL_DIRECTION
+		shipX = Settings.shipInitialPosition(viewportWidth)
+		shipY = Settings.shipInitialPosition(viewportHeight)
+		shipDirection = Settings.SHIP_INITIAL_DIRECTION
 
 		movingForward = false
 		turningLeft = false
@@ -127,13 +127,13 @@ class Gameplay {
 		engineLooper = executor.scheduleWithFixedDelay(
 			{ advance() },
 			0,
-			1000L / GameplaySettings.TARGET_IPS,
+			1000L / Settings.TARGET_IPS,
 			java.util.concurrent.TimeUnit.MILLISECONDS
 		)
 
 		onStarted()
 
-		Log.d(LOG_TAG, "Gameplay loop started at ${GameplaySettings.TARGET_IPS} iterations per second")
+		Log.d(LOG_TAG, "Gameplay loop started at ${Settings.TARGET_IPS} iterations per second")
 	}
 
 
@@ -270,7 +270,7 @@ class Gameplay {
 		var isSceneChanged = false
 
 		// maintain constant movement steps per frame, when TARGET_IPS is increased or decreased
-		val speedNormalizer = GameplaySettings.GAME_SPEED.toFloat() / GameplaySettings.TARGET_IPS.toFloat()
+		val speedNormalizer = Settings.GAME_SPEED.toFloat() / Settings.TARGET_IPS.toFloat()
 		val moveSpeed = Ship.MOVE_SPEED * speedNormalizer
 		val turnsSpeed = Ship.TURN_SPEED * speedNormalizer
 

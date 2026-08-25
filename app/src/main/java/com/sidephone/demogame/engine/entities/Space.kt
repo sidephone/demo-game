@@ -1,4 +1,4 @@
-package com.sidephone.demogame.engine.graphics
+package com.sidephone.demogame.engine.entities
 
 /**
  * This represents the background of the game. Currently, it is just a solid color, but you can

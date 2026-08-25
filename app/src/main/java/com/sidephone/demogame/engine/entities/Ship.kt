@@ -1,5 +1,6 @@
-package com.sidephone.demogame.engine.graphics
+package com.sidephone.demogame.engine.entities
 
+import com.sidephone.demogame.engine.graphics.DrawCommand
 import kotlin.math.cos
 import kotlin.math.sin
 
