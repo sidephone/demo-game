@@ -56,7 +56,7 @@ class Ship {
 	 * desired position of the screen.
 	 */
 	private fun getDrawCommands(): List<DrawCommand> {
-		// Orders matters - last objects will be drawn on top of the previous ones.
+		// Order matters - last objects will be drawn on top of the previous ones.
 		return listOf(
 //			 outline - uncomment for debugging purposes
 //			DrawCommand.Circle(0f, 0f, RADIUS,0xffffffff.toInt(), filled = false),
