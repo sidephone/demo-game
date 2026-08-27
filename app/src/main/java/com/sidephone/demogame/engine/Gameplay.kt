@@ -110,6 +110,7 @@ class Gameplay {
 
 		isPaused = false
 		firstIteration = true
+		pressedKeys = emptySet()
 
 		engineLooper = executor.scheduleWithFixedDelay(
 			{ advance() },
