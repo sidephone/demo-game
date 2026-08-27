@@ -54,9 +54,9 @@ class Ship {
 	 * Initializes a new ship, so it is ready to be manipulated and drawn on the screen. Use this
 	 * at the beginning of the game, or when the ship is destroyed and needs to respawn.
 	 */
-	fun spawn(viewPortWidth: Float, viewPortHeight: Float) {
-		x = viewPortWidth / 2f
-		y = viewPortHeight / 2f
+	fun spawn(viewportWidth: Float, viewportHeight: Float) {
+		x = viewportWidth / 2f
+		y = viewportHeight / 2f
 		direction = INITIAL_DIRECTION
 		if (drawCommands.isEmpty()) {
 			drawCommands = getDrawCommands()

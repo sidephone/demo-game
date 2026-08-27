@@ -12,6 +12,7 @@ import com.sidephone.demogame.engine.graphics.GameFrame
 import com.sidephone.demogame.settings.Settings
 import java.util.concurrent.Executors
 import java.util.concurrent.Future
+import java.util.concurrent.TimeUnit
 
 
 /**
@@ -115,8 +116,8 @@ class Gameplay {
 		engineLooper = executor.scheduleWithFixedDelay(
 			{ advance() },
 			0,
-			1000L / Settings.TARGET_IPS,
-			java.util.concurrent.TimeUnit.MILLISECONDS
+			1_000_000_000L / Settings.TARGET_IPS,
+			TimeUnit.NANOSECONDS
 		)
 
 		onStarted()
