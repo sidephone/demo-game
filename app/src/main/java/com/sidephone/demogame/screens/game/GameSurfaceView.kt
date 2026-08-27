@@ -153,7 +153,6 @@ class GameSurfaceView(context: Context, private var gameplay: Gameplay, private 
 						is DrawCommand.Line -> drawLine(this, command)
 						is DrawCommand.Polygon -> drawPolygon(this, command)
 						is DrawCommand.Rect -> drawRectangle(this, command)
-						else -> {}
 					}
 				}
 			}
