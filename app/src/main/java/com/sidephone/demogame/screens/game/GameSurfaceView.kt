@@ -211,13 +211,9 @@ class GameSurfaceView(context: Context, private var gameplay: Gameplay, private 
 		path.close()
 
 		if (command.rotateDeg != 0f) {
-			path.transform(
-				makeRotationMatrix(
-					command.rotateDeg,
-					command.points.map { it.first }.average().toFloat(),
-					command.points.map { it.second }.average().toFloat(),
-				)
-			)
+			val pivotX = command.points.sumOf { it.first.toDouble() }.toFloat() / command.points.size
+			val pivotY = command.points.sumOf { it.second.toDouble() }.toFloat() / command.points.size
+			path.transform(makeRotationMatrix(command.rotateDeg, pivotX, pivotY))
 		}
 
 		canvas.drawPath(path, paint)
