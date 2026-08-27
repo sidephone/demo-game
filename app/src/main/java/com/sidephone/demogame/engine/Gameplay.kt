@@ -252,13 +252,10 @@ class Gameplay {
 
 		var actionTaken = false
 
-		if (KeyEvent.KEYCODE_DPAD_LEFT in keys) {
-			ship.turn(now, left = true)
-			actionTaken = true
-		}
-
-		if (KeyEvent.KEYCODE_DPAD_RIGHT in keys) {
-			ship.turn(now, left = false)
+		val leftPressed = KeyEvent.KEYCODE_DPAD_LEFT in keys
+		val rightPressed = KeyEvent.KEYCODE_DPAD_RIGHT in keys
+		if (leftPressed xor rightPressed) {
+			ship.turn(now, left = leftPressed)
 			actionTaken = true
 		}
 
