@@ -2,6 +2,9 @@ package com.sidephone.demogame.engine.entities
 
 import com.sidephone.demogame.engine.graphics.DrawCommand
 import com.sidephone.demogame.engine.graphics.DrawCommandGroup
+import com.sidephone.demogame.settings.Settings
+import kotlin.math.cos
+import kotlin.math.sin
 
 
 /**
@@ -10,57 +13,108 @@ import com.sidephone.demogame.engine.graphics.DrawCommandGroup
  */
 class Ship {
 	companion object {
+		const val INITIAL_DIRECTION = -90f // degrees, 0 is to the right, -90 is straight up
 		const val RADIUS: Float = 30f
-		const val MOVE_SPEED = 3f // px per iteration
-		const val TURN_SPEED = 2.8f // degrees per iteration
+
+		const val MOVE_SPEED = 180f // px per second
+		const val TURN_SPEED = 150f // degrees per second
+		val MOVE_STEP_MAX: Float = MOVE_SPEED / Settings.TARGET_IPS.toFloat()
+		val TURN_STEP_MAX: Float = TURN_SPEED / Settings.TARGET_IPS.toFloat()
 
 		object Cannon {
+			const val COLOR: Int = 0xffddecee.toInt()
 			const val WIDTH = RADIUS * 0.1f
 			const val HEIGHT = RADIUS * 0.8f
-			const val COLOR: Int = 0xffddecee.toInt()
 		}
 
 		object Fuselage {
+			const val COLOR: Int = 0Xffbed9dd.toInt() // navy blue
 			const val WIDTH: Float = RADIUS * 0.75f
 			const val HEIGHT: Float = RADIUS * 0.75f
-			const val COLOR: Int = 0Xffbed9dd.toInt() // navy blue
 		}
 
 		object Wing {
+			const val COLOR: Int = 0xffeeeeee.toInt()
 			const val WIDTH: Float = RADIUS * 0.5f
 			const val HEIGHT: Float = RADIUS * 0.5f
-			const val COLOR: Int = 0xffeeeeee.toInt()
+		}
+	}
+
+	private var drawCommands: List<DrawCommand> = listOf()
+
+	private var direction: Float = 0f // degrees, 0 is to the right, -90 is straight up
+	private var x: Float = 0f // px, center of the ship
+	private var y: Float = 0f // px, center of the ship
+
+	private var lastTurnTime = 0L // ms
+	private var lastMoveTime = 0L // ms
+
+
+	/**
+	 * Initializes a new ship, so it is ready to be manipulated and drawn on the screen. Use this
+	 * at the beginning of the game, or when the ship is destroyed and needs to respawn.
+	 */
+	fun spawn(viewportWidth: Float, viewportHeight: Float) {
+		x = viewportWidth / 2f
+		y = viewportHeight / 2f
+		direction = INITIAL_DIRECTION
+		if (drawCommands.isEmpty()) {
+			drawCommands = getDrawCommands()
 		}
 	}
 
 
-	private var drawCommands: List<DrawCommand> = listOf()
+	/**
+	 * Moves the ship one step forward in the direction it is currently facing. The step is calculated
+	 * based on the time elapsed since the last move, and is capped at a maximum value to prevent
+	 * large jumps. In this example the ship wraps around the screen, but you can make it bounce off
+	 * or die.
+	 */
+	fun moveForward(now: Long, viewportWidth: Float, viewportHeight: Float) {
+		val moveSpeed = (MOVE_SPEED * (now - lastMoveTime) / 1000f).coerceAtMost(MOVE_STEP_MAX)
+		lastMoveTime = now
+
+		val angle = Math.toRadians(direction.toDouble())
+		x += moveSpeed * cos(angle).toFloat()
+		y += moveSpeed * sin(angle).toFloat()
+
+		if (x < 0) x = viewportWidth
+		if (y < 0) y = viewportHeight
+		if (x > viewportWidth) x = 0f
+		if (y > viewportHeight) y = 0f
+	}
 
 
 	/**
-	 * Returns the full set of commands to draw a ship and position it on the screen at the given
-	 * coordinates and direction.
+	 * Turns the ship left or right based on the current direction and the time elapsed since the last
+	 * turn. The turn speed is capped at a maximum value to prevent large jumps.
 	 */
-	fun draw(x: Float, y: Float, direction: Float): DrawCommandGroup {
-		drawCommands = drawCommands.ifEmpty { getDrawCommands() }
+	fun turn(now: Long, left: Boolean) {
+		val turnSpeed = (TURN_SPEED * (now - lastTurnTime) / 1000f).coerceAtMost(TURN_STEP_MAX)
+		lastTurnTime = now
 
-		// for convenience, we draw the ship upwards, but the zero direction is to the right, so we need
-		// to rotate it permanently by 90 degrees to appear straight up.
+		direction += if (left) -turnSpeed else turnSpeed
+	}
+
+
+	/**
+	 * Bundles the current position and direction with the list of draw commands in a DrawCommandGroup.
+	 * Since the ship is drawn facing upwards, we also permanently rotate it by 90 degrees to appear
+	 * correctly on the screen (because the zero direction is to the right).
+	 */
+	fun draw(): DrawCommandGroup {
 		return DrawCommandGroup(x, y, direction + 90f, drawCommands)
 	}
 
 
 	/**
 	 * Draw this ship in a local coordinate system, with the origin at the center of the ship. The ship
-	 * is drawn facing upwards. Put the commands in DrawCommandGroup to move and rotate it on the
-	 * desired position of the screen.
+	 * is drawn facing upwards. The resulting list of draw commands is always the same, so we can cache
+	 * it and reuse it for every frame.
 	 */
 	private fun getDrawCommands(): List<DrawCommand> {
 		// Order matters - last objects will be drawn on top of the previous ones.
 		return listOf(
-//			 outline - uncomment for debugging purposes
-//			DrawCommand.Circle(0f, 0f, RADIUS,0xffffffff.toInt(), filled = false),
-
 			// cannon
 			DrawCommand.Rect(
 				-Cannon.WIDTH / 2,

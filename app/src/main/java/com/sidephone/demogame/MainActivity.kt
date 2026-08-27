@@ -19,14 +19,11 @@ import androidx.core.view.WindowInsetsControllerCompat
 import com.sidephone.demogame.engine.Gamepad
 import com.sidephone.demogame.engine.Gameplay
 import com.sidephone.demogame.screens.MainMenuScreen
+import com.sidephone.demogame.screens.ScreenType
 import com.sidephone.demogame.screens.SettingsScreen
 import com.sidephone.demogame.screens.game.GameScreen
 import com.sidephone.demogame.ui.theme.DemogameTheme
 
-
-private enum class Screen {
-    Menu, Game, Settings
-}
 
 /**
  * Main activity of the game. It displays all screens, coordinates communication between the game
@@ -44,15 +41,15 @@ class MainActivity : ComponentActivity() {
 
 		setContent {
 			DemogameTheme {
-				var currentScreen by remember { mutableStateOf(Screen.Menu) }
+				var currentScreen by remember { mutableStateOf(ScreenType.Menu) }
 				var isGamePaused by remember { mutableStateOf(false) }
 
 				// Back button/gesture returns to the menu from any sub-screen
-				BackHandler(enabled = currentScreen != Screen.Menu) {
-					if (currentScreen == Screen.Game) {
-						gameplay.pause()
+				BackHandler(enabled = currentScreen != ScreenType.Menu) {
+					if (currentScreen == ScreenType.Game) {
+						gameplay.onStartButton()
 					} else {
-						currentScreen = Screen.Menu
+						currentScreen = ScreenType.Menu
 					}
 				}
 
@@ -60,36 +57,36 @@ class MainActivity : ComponentActivity() {
 					GameScreen(gameplay) // Keep this in memory due to an Android bug. See below.
 
 					when (currentScreen) {
-						Screen.Menu -> MainMenuScreen(
+						ScreenType.Menu -> MainMenuScreen(
 							isGamePaused = isGamePaused,
-							onSettings = { currentScreen = Screen.Settings },
+							onSettings = { currentScreen = ScreenType.Settings },
 							onExit = { finish() },
 							onEndGame = {
 								gameplay.stop()
 								isGamePaused = gameplay.isPaused()
 							},
 							onNewGame = {
-								currentScreen = Screen.Game
+								currentScreen = ScreenType.Game
 
 								gamepad.reset()
 
 								if (!gameplay.isPaused()) gameplay.reset()
 								gameplay
-									.setOnPausedCallback {
+									.setOnStartButtonPressedCallback {
+										currentScreen = ScreenType.Menu
 										isGamePaused = gameplay.isPaused()
-										currentScreen = Screen.Menu
 									}
 									.start()
 							},
 						)
-						Screen.Game -> {
+						ScreenType.Game -> {
 						// Due to an Android bug, we initialize the screen at the beginning and keep the
 						// object alive all the time. Otherwise, we can't make it render after returning from
 						// paused state, because its surfaceCreated() method is not called again.
 						// See: https://slack-chats.kotlinlang.org/t/12312231/funky-issue-i-ve-got-i-m-using-androidview-with-a-surfacevie
 						// See: https://issuetracker.google.com/issues/285718058
 						}
-						Screen.Settings -> SettingsScreen { currentScreen = Screen.Menu }
+						ScreenType.Settings -> SettingsScreen { currentScreen = ScreenType.Menu }
 					}
 				}
 			}
