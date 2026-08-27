@@ -4,5 +4,5 @@ import android.graphics.Color
 
 data class GameFrame(
 	val backgroundColor: Int = Color.BLACK,
-	val commands: List<DrawCommand> = emptyList()
+	val commandGroups: List<DrawCommandGroup> = emptyList()
 )

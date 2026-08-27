@@ -5,10 +5,10 @@ import android.view.KeyEvent
 import androidx.annotation.AnyThread
 import androidx.annotation.MainThread
 import androidx.annotation.WorkerThread
-import com.sidephone.demogame.engine.graphics.DrawCommand
-import com.sidephone.demogame.engine.graphics.GameFrame
 import com.sidephone.demogame.engine.entities.Ship
 import com.sidephone.demogame.engine.entities.Space
+import com.sidephone.demogame.engine.graphics.DrawCommandGroup
+import com.sidephone.demogame.engine.graphics.GameFrame
 import com.sidephone.demogame.settings.Settings
 import java.util.concurrent.Executors
 import java.util.concurrent.Future
@@ -21,7 +21,9 @@ import kotlin.math.sin
  * It is designed to be simple and easy to understand, so you can modify it to create your own game.
  */
 class Gameplay {
-	private val LOG_TAG = Gameplay::class.java.simpleName
+	companion object {
+		private val LOG_TAG = Gameplay::class.java.simpleName
+	}
 
 	// game loop
 	private var executor = Executors.newSingleThreadScheduledExecutor()
@@ -306,8 +308,9 @@ class Gameplay {
 			return
 		}
 
-		val screenObjects = mutableListOf<DrawCommand>()
-		screenObjects.addAll(ship.draw(shipX, shipY, shipDirection.toFloat()))
+		val screenObjects = mutableListOf<DrawCommandGroup>()
+		screenObjects.add(ship.draw(shipX, shipY, shipDirection.toFloat()))
+		// add more game objects here, e.g., asteroids, bullets, etc.
 
 		currentFrame = GameFrame(Space.BACKGROUND, screenObjects)
 	}

@@ -2,10 +2,13 @@ package com.sidephone.demogame.screens.game
 
 import android.content.Context
 import android.graphics.Canvas
+import android.graphics.Matrix
 import android.graphics.Paint
 import android.util.Log
 import android.view.SurfaceHolder
 import android.view.SurfaceView
+import androidx.core.graphics.withMatrix
+import androidx.core.graphics.withTranslation
 import com.sidephone.demogame.engine.Gameplay
 import com.sidephone.demogame.engine.graphics.DrawCommand
 import com.sidephone.demogame.engine.graphics.GameFrame
@@ -120,49 +123,118 @@ class GameSurfaceView(context: Context, private var gameplay: Gameplay, private 
 
 
 	/**
+	 * Creates a rotation matrix to draw a rotated shape around the given point (pivotX, pivotY) by
+	 * the given angle in degrees.
+	 */
+	private fun makeRotationMatrix(angle: Float, pivotX: Float, pivotY: Float): Matrix {
+		val matrix = Matrix()
+		matrix.postRotate(angle, pivotX, pivotY)
+		return matrix
+	}
+
+
+	/**
 	 * Draws the provided command list to the given Canvas.
 	 */
-	private fun drawToCanvas(canvas: Canvas, commands: GameFrame?) {
-		if (commands == null) return
+	private fun drawToCanvas(canvas: Canvas, frame: GameFrame?) {
+		if (frame == null) return
 
-		canvas.drawColor(commands.backgroundColor)
+		canvas.drawColor(frame.backgroundColor)
 
-		for (command in commands.commands) {
-			when (command) {
-				is DrawCommand.Arc -> {
-					paint.color = command.color
-					paint.style = if (command.filled) Paint.Style.FILL else Paint.Style.STROKE
-					val rectF = android.graphics.RectF(
-						command.cx - command.radius,
-						command.cy - command.radius,
-						command.cx + command.radius,
-						command.cy + command.radius
-					)
-					canvas.drawArc(rectF, command.startAngle, command.sweepAngle, command.filled, paint)
-				}
+		for (commandGroup in frame.commandGroups) {
+			canvas.withTranslation(commandGroup.x, commandGroup.y) {
+				rotate(commandGroup.rotationDegrees)
 
-				is DrawCommand.Dot -> {
-					paint.color = command.color
-					canvas.drawPoint(command.x, command.y, paint)
-				}
-
-				is DrawCommand.Line -> {
-					paint.color = command.color
-					canvas.drawLine(command.x1, command.y1, command.x2, command.y2, paint)
-				}
-
-				is DrawCommand.Circle -> {
-					paint.color = command.color
-					paint.style = if (command.filled) Paint.Style.FILL else Paint.Style.STROKE
-					canvas.drawCircle(command.cx, command.cy, command.radius, paint)
-				}
-
-				is DrawCommand.Rect -> {
-					paint.color = command.color
-					paint.style = if (command.filled) Paint.Style.FILL else Paint.Style.STROKE
-					canvas.drawRect(command.left, command.top, command.right, command.bottom, paint)
+				for (command in commandGroup.commands) {
+					when (command) {
+						is DrawCommand.Arc -> drawArc(this, command)
+						is DrawCommand.Circle -> drawCircle(this, command)
+						is DrawCommand.Dot -> drawDot(this, command)
+						is DrawCommand.Line -> drawLine(this, command)
+						is DrawCommand.Polygon -> drawPolygon(this, command)
+						is DrawCommand.Rect -> drawRectangle(this, command)
+					}
 				}
 			}
+		}
+	}
+
+
+	private fun drawArc(canvas: Canvas, command: DrawCommand.Arc) {
+		paint.color = command.color
+		paint.style = if (command.filled) Paint.Style.FILL else Paint.Style.STROKE
+		val rectF = android.graphics.RectF(
+			command.cx - command.radius,
+			command.cy - command.radius,
+			command.cx + command.radius,
+			command.cy + command.radius
+		)
+		canvas.drawArc(rectF, command.startAngle, command.sweepAngle, command.filled, paint)
+	}
+
+
+	private fun drawCircle(canvas: Canvas, command: DrawCommand.Circle) {
+		paint.color = command.color
+		paint.style = if (command.filled) Paint.Style.FILL else Paint.Style.STROKE
+		canvas.drawCircle(command.cx, command.cy, command.radius, paint)
+	}
+
+
+	private fun drawDot(canvas: Canvas, command: DrawCommand.Dot) {
+		paint.color = command.color
+		canvas.drawPoint(command.x, command.y, paint)
+	}
+
+
+	private fun drawLine(canvas: Canvas, command: DrawCommand.Line) {
+		paint.color = command.color
+		canvas.drawLine(command.x1, command.y1, command.x2, command.y2, paint)
+	}
+
+
+	private fun drawPolygon(canvas: Canvas, command: DrawCommand.Polygon) {
+		if (command.points.isEmpty()) return
+
+		paint.color = command.color
+		paint.style = if (command.filled) Paint.Style.FILL else Paint.Style.STROKE
+
+		val path = android.graphics.Path()
+		for ((index, point) in command.points.withIndex()) {
+			val (x, y) = point
+			if (index == 0) {
+				path.moveTo(x, y)
+			} else {
+				path.lineTo(x, y)
+			}
+		}
+		path.close()
+
+		if (command.rotateDeg != 0f) {
+			val pivotX = command.points.sumOf { it.first.toDouble() }.toFloat() / command.points.size
+			val pivotY = command.points.sumOf { it.second.toDouble() }.toFloat() / command.points.size
+			path.transform(makeRotationMatrix(command.rotateDeg, pivotX, pivotY))
+		}
+
+		canvas.drawPath(path, paint)
+	}
+
+
+	private fun drawRectangle(canvas: Canvas, command: DrawCommand.Rect) {
+		paint.color = command.color
+		paint.style = if (command.filled) Paint.Style.FILL else Paint.Style.STROKE
+
+		if (command.rotateDeg == 0f) {
+			canvas.drawRect(command.left, command.top, command.right, command.bottom, paint)
+			return
+		}
+
+		val matrix = makeRotationMatrix(
+			command.rotateDeg,
+			(command.left + command.right) / 2,
+			(command.top + command.bottom) / 2
+		)
+		canvas.withMatrix(matrix) {
+			canvas.drawRect(command.left, command.top, command.right, command.bottom, paint)
 		}
 	}
 }
