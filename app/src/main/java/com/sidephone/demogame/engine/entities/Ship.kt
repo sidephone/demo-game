@@ -18,8 +18,8 @@ class Ship {
 
 		const val MOVE_SPEED = 180f // px per second
 		const val TURN_SPEED = 150f // degrees per second
-		const val MOVE_STEP_MAX: Float = MOVE_SPEED / Settings.TARGET_IPS.toFloat()
-		const val TURN_STEP_MAX: Float = TURN_SPEED / Settings.TARGET_IPS.toFloat()
+		val MOVE_STEP_MAX: Float = MOVE_SPEED / Settings.TARGET_IPS.toFloat()
+		val TURN_STEP_MAX: Float = TURN_SPEED / Settings.TARGET_IPS.toFloat()
 
 		object Cannon {
 			const val COLOR: Int = 0xffddecee.toInt()
