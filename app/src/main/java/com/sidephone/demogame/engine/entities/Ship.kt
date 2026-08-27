@@ -51,7 +51,7 @@ class Ship {
 
 
 	/**
-	 * Initializes a new ship, os it is ready to be manipulated and drawn on the screen. Use this
+	 * Initializes a new ship, so it is ready to be manipulated and drawn on the screen. Use this
 	 * at the beginning of the game, or when the ship is destroyed and needs to respawn.
 	 */
 	fun spawn(viewPortWidth: Float, viewPortHeight: Float) {
