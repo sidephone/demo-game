@@ -172,9 +172,8 @@ class Gameplay {
 
 
 	/**
-	 * Handle the "Start" button press. Pause the game while playing or stop it is over. Also,
-	 * call any external callbacks that care about the pause event, e.g., to navigate back to the main
-	 * menu.
+	 * Handle the "Start" button press. Pauses the game (if running) and notifies listeners (e.g. UI)
+	 * so they can navigate back to the main menu or perform other actions.
 	 */
 	@MainThread
 	fun onStartButton() {
