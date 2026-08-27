@@ -135,7 +135,6 @@ class Gameplay {
 
 		engineLooper?.cancel(true)
 		isPaused = true
-		onStartButtonPressed()
 
 		Log.d(LOG_TAG, "Gameplay loop paused")
 	}

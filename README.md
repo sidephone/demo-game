@@ -11,8 +11,9 @@ The code is located in `app/src/main/java/com/sidephone/demogame/`. See each fil
 - **engine/**
     - **entities/** Contains examples how to draw a spaceship and a background color using DrawCommands (below).
     - **graphics/**
-        - **_DrawCommand._** Contains utility functions for drawing Canvas primitives, such as circles, rectangles, lines, and dots.
-        - **_GameFrame._** Contains a background color and a list of DrawCommands. The gameplay engine generates a frame on every tick and passes it to the GameSurfaceView for rendering.
+        - **_DrawCommand._** Contains utility functions for drawing Canvas primitives, such as circles, rectangles, lines, and so on.
+        - **_DrawCommandGroup._** Contains a group of DrawCommands that belong to a certain game object. Grouped objects are drown together at a certain position and orientation.
+        - **_GameFrame._** Contains a background color and a list of DrawCommandGroups (game objects). The gameplay engine generates a frame on every tick, which then is used by GameSurfaceView for rendering.
     - **_Gamepad._** Handles the gamepad input and provides it to the game engine, `Gameplay`. You shouldn't need to modify this.
     - **_Gameplay._** The game engine. Contains the main game logic. Define your game rules and mechanics, graphics rendering, and audio playback here.
 - **screens/**
