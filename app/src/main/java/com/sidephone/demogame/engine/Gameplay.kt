@@ -12,8 +12,6 @@ import com.sidephone.demogame.engine.graphics.GameFrame
 import com.sidephone.demogame.settings.Settings
 import java.util.concurrent.Executors
 import java.util.concurrent.Future
-import kotlin.math.cos
-import kotlin.math.sin
 
 
 /**
@@ -30,29 +28,21 @@ class Gameplay {
 	private var engineLooper: Future<*>? = null
 	private var isPaused = false
 
-	// events
-	private var onPaused = {}
-	private var onStarted = {}
-
-	// input handling
+	// input
 	@Volatile private var pressedKeys = setOf<Int>()
 
-	// graphics
-	@Volatile var currentFrame: GameFrame = GameFrame()
-	@Volatile private var firstIteration = true
-	private val ship = Ship()
+	// output
+	private var onStartButtonPressed = {}
+	private var onStarted = {}
 
-	// game actions and state
+	// graphics
 	@Volatile private var viewportWidth = 1f
 	@Volatile private var viewportHeight = 1f
+	@Volatile var currentFrame: GameFrame = GameFrame()
+	@Volatile private var firstIteration = true
 
-	private var shipX = 0f
-	private var shipY = 0f
-	private var shipDirection = 0.0 // degrees
-
-	private var movingForward = false
-	private var turningLeft = false
-	private var turningRight = false
+	// game objects
+	private val ship = Ship()
 
 
 	init {
@@ -66,13 +56,8 @@ class Gameplay {
 	@MainThread
 	fun reset() {
 		pressedKeys = setOf()
-		shipX = Settings.shipInitialPosition(viewportWidth)
-		shipY = Settings.shipInitialPosition(viewportHeight)
-		shipDirection = Settings.SHIP_INITIAL_DIRECTION
 
-		movingForward = false
-		turningLeft = false
-		turningRight = false
+		ship.spawn(viewportWidth, viewportHeight)
 
 		if (!isGameThreadAlive()) {
 			if (!executor.isShutdown && !executor.isTerminated) {
@@ -150,7 +135,7 @@ class Gameplay {
 
 		engineLooper?.cancel(true)
 		isPaused = true
-		onPaused()
+		onStartButtonPressed()
 
 		Log.d(LOG_TAG, "Gameplay loop paused")
 	}
@@ -187,12 +172,24 @@ class Gameplay {
 
 
 	/**
+	 * Handle the "Start" button press. Pause the game while playing or stop it is over. Also,
+	 * call any external callbacks that care about the pause event, e.g., to navigate back to the main
+	 * menu.
+	 */
+	@MainThread
+	fun onStartButton() {
+		pause()
+		onStartButtonPressed()
+	}
+
+
+	/**
 	 * Set an optional callback to be invoked when the game is paused. This can be used to navigate
 	 * back to the main menu or perform other actions.
 	 */
 	@MainThread
-	fun setOnPausedCallback(callback: () -> Unit): Gameplay {
-		onPaused = callback
+	fun setOnStartButtonPressedCallback(callback: () -> Unit): Gameplay {
+		onStartButtonPressed = callback
 		return this
 	}
 
@@ -224,11 +221,8 @@ class Gameplay {
 	@WorkerThread
 	private fun advance() {
 		try {
-			processGameInput()
-
-			// optionally, do these at even longer intervals to save resources, e.g., every 100ms or 500ms
-			validateMovement()
-			render()
+			val inputCausedAction = processGameInput(System.currentTimeMillis())
+			render(inputCausedAction)
 		} catch (e: Exception) {
 			Log.e(LOG_TAG, "Failed advancing ahead gameplay. ${e.message}", e)
 		}
@@ -242,23 +236,38 @@ class Gameplay {
 	@MainThread
 	private fun preprocessInput() {
 		if (KeyEvent.KEYCODE_BUTTON_START in pressedKeys) {
-			pause()
+			onStartButton()
 		}
 	}
 
 
 	/**
-	 * Set any game state variables based on the currently pressed keys. This is the first step in
-	 * the game loop. All following steps will use these variables to calculate actions or draw objects.
-	 * on the screen.
+	 * Perform various actions, or set state based on the currently pressed keys. This is the first
+	 * step in the game loop. All following steps will use the state to calculate actions or draw
+	 * objects on the screen.
 	 */
 	@WorkerThread
-	private fun processGameInput() {
+	private fun processGameInput(now: Long): Boolean {
 		val keys = pressedKeys // make a copy for thread safety
 
-		movingForward = KeyEvent.KEYCODE_DPAD_UP in keys
-		turningLeft = KeyEvent.KEYCODE_DPAD_LEFT in keys
-		turningRight = KeyEvent.KEYCODE_DPAD_RIGHT in keys
+		var actionTaken = false
+
+		if (KeyEvent.KEYCODE_DPAD_LEFT in keys) {
+			ship.turn(now, left = true)
+			actionTaken = true
+		}
+
+		if (KeyEvent.KEYCODE_DPAD_RIGHT in keys) {
+			ship.turn(now, left = false)
+			actionTaken = true
+		}
+
+		if (KeyEvent.KEYCODE_DPAD_UP in keys) {
+			ship.moveForward(now, viewportWidth, viewportHeight)
+			actionTaken = true
+		}
+
+		return actionTaken
 	}
 
 
@@ -268,36 +277,8 @@ class Gameplay {
 	 * keys.
 	 */
 	@WorkerThread
-	private fun render() {
-		var isSceneChanged = false
-
-		// maintain constant movement steps per frame, when TARGET_IPS is increased or decreased
-		val speedNormalizer = Settings.GAME_SPEED.toFloat() / Settings.TARGET_IPS.toFloat()
-		val moveSpeed = Ship.MOVE_SPEED * speedNormalizer
-		val turnsSpeed = Ship.TURN_SPEED * speedNormalizer
-
-		if (turningLeft) {
-			isSceneChanged = true
-			shipDirection -= turnsSpeed
-		}
-
-		if (turningRight) {
-			isSceneChanged = true
-			shipDirection += turnsSpeed
-		}
-
-		if (movingForward) {
-			isSceneChanged = true
-
-			val angle = Math.toRadians(shipDirection).toFloat()
-			shipX += cos(angle) * moveSpeed
-			shipY += sin(angle) * moveSpeed
-
-			if (shipX < 0) shipX = viewportWidth
-			if (shipY < 0) shipY = viewportHeight
-			if (shipX > viewportWidth) shipX = 0f
-			if (shipY > viewportHeight) shipY = 0f
-		}
+	private fun render(inputCausedAction: Boolean) {
+		var isSceneChanged = inputCausedAction
 
 		if (firstIteration) {
 			firstIteration = false
@@ -309,22 +290,9 @@ class Gameplay {
 		}
 
 		val screenObjects = mutableListOf<DrawCommandGroup>()
-		screenObjects.add(ship.draw(shipX, shipY, shipDirection.toFloat()))
+		screenObjects.add(ship.draw())
 		// add more game objects here, e.g., asteroids, bullets, etc.
 
 		currentFrame = GameFrame(Space.BACKGROUND, screenObjects)
-	}
-
-
-	/**
-	 * An example of input validation. In this demo, we simply ensure that the player cannot turn left
-	 * and right at the same time.
-	 */
-	@WorkerThread
-	private fun validateMovement() {
-		if (turningLeft && turningRight) {
-			turningLeft = false
-			turningRight = false
-		}
 	}
 }
