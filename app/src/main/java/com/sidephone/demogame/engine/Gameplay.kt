@@ -248,7 +248,7 @@ class Gameplay {
 	 */
 	@WorkerThread
 	private fun processGameInput(now: Long): Boolean {
-		val keys = pressedKeys // make a copy for thread safety
+		val keys = pressedKeys.toSet() // make a copy for thread safety
 
 		var actionTaken = false
 
