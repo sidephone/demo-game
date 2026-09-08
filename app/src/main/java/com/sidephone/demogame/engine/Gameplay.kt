@@ -150,6 +150,8 @@ class Gameplay {
 	fun stop() {
 		isPaused = false
 		executor.shutdownNow()
+		engineLooper?.cancel(true)
+		engineLooper = null
 		Log.d(LOG_TAG, "Gameplay loop stopped")
 	}
 
