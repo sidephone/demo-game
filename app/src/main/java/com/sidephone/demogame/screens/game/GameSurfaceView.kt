@@ -153,6 +153,7 @@ class GameSurfaceView(context: Context, private var gameplay: Gameplay, private 
 						is DrawCommand.Line -> drawLine(this, command)
 						is DrawCommand.Polygon -> drawPolygon(this, command)
 						is DrawCommand.Rect -> drawRectangle(this, command)
+						is DrawCommand.Text -> drawText(this, command)
 					}
 				}
 			}
@@ -236,5 +237,14 @@ class GameSurfaceView(context: Context, private var gameplay: Gameplay, private 
 		canvas.withMatrix(matrix) {
 			canvas.drawRect(command.left, command.top, command.right, command.bottom, paint)
 		}
+	}
+
+
+	private fun drawText(canvas: Canvas, command: DrawCommand.Text) {
+		paint.color = command.color
+		paint.style = Paint.Style.FILL
+		paint.isAntiAlias = true
+		paint.textSize = command.textSize
+		canvas.drawText(command.text, command.x, command.y, paint)
 	}
 }
