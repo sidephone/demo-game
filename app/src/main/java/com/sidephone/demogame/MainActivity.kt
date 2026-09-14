@@ -22,7 +22,7 @@ import com.sidephone.demogame.screens.MainMenuScreen
 import com.sidephone.demogame.screens.ScreenType
 import com.sidephone.demogame.screens.SettingsScreen
 import com.sidephone.demogame.screens.game.GameScreen
-import com.sidephone.demogame.ui.theme.DemogameTheme
+import com.sidephone.demogame.ui.theme.GameTheme
 
 
 /**
@@ -40,7 +40,7 @@ class MainActivity : ComponentActivity() {
 		switchToFullScreen()
 
 		setContent {
-			DemogameTheme {
+			GameTheme {
 				var currentScreen by remember { mutableStateOf(ScreenType.Menu) }
 				var isGamePaused by remember { mutableStateOf(false) }
 
