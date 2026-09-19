@@ -224,6 +224,11 @@ class Gameplay {
 	private fun advance() {
 		try {
 			val inputCausedAction = processGameInput(System.currentTimeMillis())
+
+			// Add more game elements here. For example, you can create a doLogic() method that handles
+			// collisions, scoring, and other game mechanics. Ensure that you do such things after reading
+			// the input and before rendering, so that the game state is updated correctly.
+
 			render(inputCausedAction)
 		} catch (e: Exception) {
 			Log.e(LOG_TAG, "Failed advancing ahead gameplay. ${e.message}", e)
@@ -277,6 +282,9 @@ class Gameplay {
 	 */
 	@WorkerThread
 	private fun render(inputCausedAction: Boolean) {
+		// Remove `isSceneChanged` if your game includes continuous animations or other dynamic elements
+		// that require constant redrawing. Here, it is intended to save resources by only redrawing when
+		// something has moved on the screen.
 		var isSceneChanged = inputCausedAction
 
 		if (firstIteration) {

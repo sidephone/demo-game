@@ -1,9 +1,12 @@
 # Sidephone Demo Game
-This is a minimal game example with 2D vector graphics drawn on a Canvas, and handling of Sidephone's gamepad tile. It is intended to help you get started with your own game development on Sidephone.
+This is a minimal game example with a 2D vector graphics engine, demonstrating how to utilize the Sidephone's mini controller. You can use this as the foundation of your next game. Feel free to restructure it to your needs, add more screens, custom controls, a different 2D or 3D engine, add sounds and other resources, write tests, and so on.
 
-Feel free to restructure the project to your needs, add more screens, custom controls, a different 2D or 3D engine, add sounds and other resources, write tests, and so on. This project is intended to help you get started quicker, rather than being hard development requirement.
+Note that this demo is not intended to teach you how to make games, but rather to get you started and help you turn your idea into a real game faster. You need to have basic knowledge of Kotlin and Android, as well as an idea of how to model the mechanics and the logic of your game.
 
-If you would like to see a more advanced example, check out the [Snake game](https://github.com/sidephone/snake).
+If you would like to see practical examples of games built on top of this demo project, check out:
+- [Snake](https://github.com/sidephone/snake) - the simplest example with minimal logic and graphics complexity.
+- [Blocks](https://github.com/sidephone/blocks) - a game with more advanced logic.
+- [Space Blaster](https://github.com/sidephone/space-blaster) - a game that has complex logic with a lot of moving parts, sophisticated 2D objects, and realistic physics.
 
 ## Project Structure
 The code is located in `app/src/main/java/com/sidephone/demogame/`. See each file for more details.
@@ -14,7 +17,7 @@ The code is located in `app/src/main/java/com/sidephone/demogame/`. See each fil
         - **_DrawCommand._** Contains utility functions for drawing Canvas primitives, such as circles, rectangles, lines, and so on.
         - **_DrawCommandGroup._** Contains a group of DrawCommands that belong to a certain game object. Grouped objects are drawn together at a certain position and orientation.
         - **_GameFrame._** Contains a background color and a list of DrawCommandGroups (game objects). The gameplay engine generates a frame on every tick, which is then used by GameSurfaceView for rendering.
-    - **_Gamepad._** Handles the gamepad input and provides it to the game engine, `Gameplay`. You shouldn't need to modify this.
+    - **_Gamepad._** Handles the gamepad input and provides it to the game engine, `Gameplay`. Modify it if you need to add support for the other keypad tiles or for external input devices. You can see different ways of doing this in the example games above.
     - **_Gameplay._** The game engine. Contains the main game logic. Define your game rules and mechanics, graphics rendering, and audio playback here.
 - **screens/**
     - **game/**
@@ -25,7 +28,7 @@ The code is located in `app/src/main/java/com/sidephone/demogame/`. See each fil
 - **settings/**
     - ... (Contains constants used through the project. Also, a good place to put the SharedPreferences, if needed)
 - **ui**/
-    - **components/** ... (custom UI components, such as buttons, titles, etc.)
+    - **components/** ... (custom UI components, such as buttons, titles, etc. You can find more useful components in the example games above)
     - **modifiers/** ... (custom UI modifiers for Jetpack Compose)
     - **theme/** ... (standard Android UI theme files: Color, Dimens, Type, etc.)
 
